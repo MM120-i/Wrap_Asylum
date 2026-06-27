@@ -1,0 +1,11 @@
+{
+  "name": "warpasylum",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "bun run dev:cli",
+    "dev:cli": "bun run --watch packages/cli/src/index.tsx"
+  },
+  "workspaces": [
+    "packages/*"
+  ]
+}
