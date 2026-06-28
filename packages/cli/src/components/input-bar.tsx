@@ -84,9 +84,9 @@ export const InputBar = ({ onSubmit, disabled = false }: Props) => {
           exit: () => renderer.destroy(),
           toast,
         });
-      } else {
-        textarea.insertText(command.value + " ");
       }
+
+      textarea.insertText(command.value + " ");
     },
     [renderer, toast],
   );

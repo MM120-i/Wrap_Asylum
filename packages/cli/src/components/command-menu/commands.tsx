@@ -17,7 +17,7 @@ export const COMMANDS: Command[] = [
     value: "/agents",
     action: (ctx) => {
       ctx.toast.show({
-        message: "Swithcing agents...",
+        message: "Switching agents...",
       });
     },
   },
@@ -68,7 +68,7 @@ export const COMMANDS: Command[] = [
     action: (ctx) => {
       ctx.toast.show({
         variant: "success",
-        message: "Signed out",
+        message: "Signing out...",
       });
     },
   },
