@@ -7,8 +7,8 @@ type Props = {
 };
 
 export const TEXTAREA_KEY_BINDINGS: KeyBinding[] = [
-  { name: "enter", shift: true, action: "newline" },
-  { name: "return", shift: true, action: "newline" },
+  { name: "return", meta: true, action: "newline" },
+  { name: "kpenter", meta: true, action: "newline" },
   { name: "enter", action: "submit" },
   { name: "return", action: "submit" },
 ];
