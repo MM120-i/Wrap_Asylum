@@ -7,6 +7,7 @@ import { useRenderer } from "@opentui/react";
 import type { Command } from "./command-menu/types";
 import { useCommandMenu } from "./command-menu/use-command-menu";
 import { useToast } from "../providers/toast";
+import { useKeyboardLayer } from "../providers/keyboard-layer";
 
 type Props = {
   onSubmit: (text: string) => void;
@@ -27,6 +28,7 @@ export const InputBar = ({ onSubmit, disabled = false }: Props) => {
   const onSubmitRef = useRef<() => void>(() => {});
   const renderer = useRenderer();
   const toast = useToast();
+  const { isTopLayer, setResponder } = useKeyboardLayer();
 
   const {
     showCommandMenu,
@@ -125,6 +127,25 @@ export const InputBar = ({ onSubmit, disabled = false }: Props) => {
     handleSubmit();
   };
 
+  useEffect(() => {
+    setResponder("base", () => {
+      if (disabled) {
+        return false;
+      }
+
+      const textarea = textareaRef.current;
+
+      if (textarea && textarea.plainText.length > 0) {
+        textarea.setText("");
+        return true;
+      }
+
+      return false;
+    });
+
+    return () => setResponder("base", null);
+  }, [disabled, setResponder]);
+
   return (
     <box width={"100%"} alignItems="center">
       <box border={["left"]} borderColor={"cyan"}>
@@ -157,7 +178,7 @@ export const InputBar = ({ onSubmit, disabled = false }: Props) => {
           )}
           <textarea
             ref={textareaRef}
-            focused={!disabled}
+            focused={!disabled && isTopLayer("base")}
             height={3}
             width={45}
             keyBindings={TEXTAREA_KEY_BINDINGS}

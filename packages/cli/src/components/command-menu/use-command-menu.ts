@@ -3,6 +3,7 @@ import type { ScrollBoxRenderable } from "@opentui/core";
 import { useKeyboard } from "@opentui/react";
 import { getFilteredCommands } from "./filter-commands";
 import type { Command } from "./types";
+import { useKeyboardLayer } from "../../providers/keyboard-layer";
 
 type UseCommandMenuReturn = {
   showCommandMenu: boolean;
@@ -19,6 +20,7 @@ export const useCommandMenu = (): UseCommandMenuReturn => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [showCommandMenu, setShowCommandMenu] = useState(false);
   const scrollRef = useRef<ScrollBoxRenderable | null>(null);
+  const { push, pop, isTopLayer } = useKeyboardLayer();
 
   const commandQuery =
     showCommandMenu && textValue.startsWith("/") ? textValue.slice(1) : "";
@@ -27,6 +29,11 @@ export const useCommandMenu = (): UseCommandMenuReturn => {
     () => getFilteredCommands(commandQuery),
     [commandQuery],
   );
+
+  const closeCommand = () => {
+    setShowCommandMenu(false);
+    pop("command");
+  };
 
   const handleContentChange = (text: string) => {
     setTextValue(text);
@@ -42,8 +49,14 @@ export const useCommandMenu = (): UseCommandMenuReturn => {
 
     if (prefix !== null && !prefix.includes(" ")) {
       setShowCommandMenu(true);
+
+      // TODO: Refactor this sketchy keyboard responder layer. That string is hardcoded and can be anything and it'll break the entire component
+      push("command", () => {
+        closeCommand();
+        return true;
+      });
     } else {
-      setShowCommandMenu(false);
+      closeCommand();
     }
   };
 
@@ -51,21 +64,21 @@ export const useCommandMenu = (): UseCommandMenuReturn => {
     const command = filteredCommands[index];
 
     if (command) {
-      setShowCommandMenu(false);
+      closeCommand();
     }
 
     return command;
   };
 
   useKeyboard((key) => {
-    if (!showCommandMenu) {
+    if (!showCommandMenu || !isTopLayer("command")) {
       return;
     }
 
     switch (key.name) {
       case "escape":
         key.preventDefault();
-        setShowCommandMenu(false);
+        closeCommand();
         break;
 
       case "up":
