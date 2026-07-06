@@ -29,7 +29,7 @@ export const COMMANDS: Command[] = [
     action: (ctx) => {
       ctx.dialog.open({
         title: "Select Model",
-        children: <text>Model seelction coming soon...</text>,
+        children: <text>Model selection coming soon...</text>,
       });
     },
   },

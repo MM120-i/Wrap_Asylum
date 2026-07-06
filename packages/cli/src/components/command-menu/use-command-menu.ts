@@ -1,4 +1,4 @@
-import { useRef, useState, useMemo, type RefObject } from "react";
+import { useRef, useState, useMemo, useEffect, type RefObject } from "react";
 import type { ScrollBoxRenderable } from "@opentui/core";
 import { useKeyboard } from "@opentui/react";
 import { getFilteredCommands } from "./filter-commands";
@@ -21,6 +21,12 @@ export const useCommandMenu = (): UseCommandMenuReturn => {
   const [showCommandMenu, setShowCommandMenu] = useState(false);
   const scrollRef = useRef<ScrollBoxRenderable | null>(null);
   const { push, pop, isTopLayer } = useKeyboardLayer();
+
+  useEffect(() => {
+    return () => {
+      pop("command");
+    };
+  }, [pop]);
 
   const commandQuery =
     showCommandMenu && textValue.startsWith("/") ? textValue.slice(1) : "";
