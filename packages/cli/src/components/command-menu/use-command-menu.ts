@@ -30,7 +30,7 @@ export const useCommandMenu = (): UseCommandMenuReturn => {
     [commandQuery],
   );
 
-  const closeCommand = () => {
+  const close = () => {
     setShowCommandMenu(false);
     pop("command");
   };
@@ -52,11 +52,11 @@ export const useCommandMenu = (): UseCommandMenuReturn => {
 
       // TODO: Refactor this sketchy keyboard responder layer. That string is hardcoded and can be anything and it'll break the entire component
       push("command", () => {
-        closeCommand();
+        close();
         return true;
       });
     } else {
-      closeCommand();
+      close();
     }
   };
 
@@ -64,7 +64,7 @@ export const useCommandMenu = (): UseCommandMenuReturn => {
     const command = filteredCommands[index];
 
     if (command) {
-      closeCommand();
+      close();
     }
 
     return command;
@@ -78,7 +78,7 @@ export const useCommandMenu = (): UseCommandMenuReturn => {
     switch (key.name) {
       case "escape":
         key.preventDefault();
-        closeCommand();
+        close();
         break;
 
       case "up":
