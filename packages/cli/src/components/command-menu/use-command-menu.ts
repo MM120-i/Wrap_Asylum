@@ -5,8 +5,6 @@ import { getFilteredCommands } from "./filter-commands";
 import type { Command } from "./types";
 import { useKeyboardLayer } from "../../providers/keyboard-layer";
 
-// 2:11:16 Start a new branch
-
 type UseCommandMenuReturn = {
   showCommandMenu: boolean;
   commandQuery: string;

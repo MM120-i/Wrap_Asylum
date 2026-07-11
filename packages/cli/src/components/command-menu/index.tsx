@@ -21,6 +21,4 @@ export const CommandMenu = ({
   scrollRef,
   onSelect,
   onExecute,
-}: CommandMenuProps) => {
-  // 39:20
-};
+}: CommandMenuProps) => {};
