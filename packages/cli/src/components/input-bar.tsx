@@ -48,7 +48,7 @@ export const InputBar = ({ onSubmit, disabled = false }: Props) => {
     }
 
     handleContentChange(textarea.plainText);
-  }, []);
+  }, [handleContentChange]);
 
   const handleSubmit = useCallback(() => {
     if (disabled) {
@@ -87,9 +87,9 @@ export const InputBar = ({ onSubmit, disabled = false }: Props) => {
           toast,
           dialog,
         });
-      } else {
-        textarea.insertText(command.value + " ");
       }
+
+      textarea.insertText(command.value + " ");
     },
     [renderer, toast],
   );
