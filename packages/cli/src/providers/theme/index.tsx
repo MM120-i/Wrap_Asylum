@@ -42,13 +42,16 @@ const presistTheme = (theme: Theme) => {
       ),
       "utf8",
     );
-  } catch {}
+  } catch (err) {
+    console.warn("Failed to persist theme:", err);
+  }
 };
 
 type ThemeContextValue = {
   colors: ThemeColors;
   currentTheme: Theme;
   setTheme: (theme: Theme) => void;
+  previewTheme: (theme: Theme) => void;
 };
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -75,9 +78,13 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
     presistTheme(theme);
   }, []);
 
+  const previewTheme = useCallback((theme: Theme) => {
+    setCurrentTheme(theme);
+  }, []);
+
   return (
     <ThemeContext.Provider
-      value={{ colors: currentTheme.colors, currentTheme, setTheme }}
+      value={{ colors: currentTheme.colors, currentTheme, setTheme, previewTheme }}
     >
       {children}
     </ThemeContext.Provider>

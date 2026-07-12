@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type ReactNode } from "react";
+import { useCallback, useRef, useState, useEffect, type ReactNode } from "react";
 import {
   ScrollBoxRenderable,
   TextAttributes,
@@ -8,6 +8,7 @@ import {
 
 import { useKeyboard } from "@opentui/react";
 import { useKeyboardLayer } from "../providers/keyboard-layer";
+import { useTheme } from "../providers/theme";
 
 const MAX_VISIBLE_ITEMS = 6;
 
@@ -37,7 +38,7 @@ export const DialogSearchList = <T,>({
   const inputRef = useRef<InputRenderable>(null);
   const scrollRef = useRef<ScrollBoxRenderable>(null);
   const { isTopLayer } = useKeyboardLayer();
-  // const {colors} = useTheme();
+  const { colors } = useTheme();
 
   const handleContentChange = useCallback(() => {
     const text = inputRef.current?.value ?? "";
@@ -57,6 +58,10 @@ export const DialogSearchList = <T,>({
 
   const visibleHeight = Math.min(filtered.length, MAX_VISIBLE_ITEMS);
 
+  useEffect(() => {
+    setSelectedIndex((i) => Math.min(i, Math.max(0, filtered.length - 1)));
+  }, [filtered.length]);
+
   useKeyboard((key) => {
     if (!isTopLayer("dialog")) {
       return;
@@ -64,7 +69,7 @@ export const DialogSearchList = <T,>({
 
     switch (key.name) {
       case "enter":
-      case "return":
+      case "return": {
         const item = filtered[selectedIndex];
 
         if (item) {
@@ -72,6 +77,7 @@ export const DialogSearchList = <T,>({
         }
 
         break;
+      }
 
       case "up":
         setSelectedIndex((i) => {
@@ -94,6 +100,10 @@ export const DialogSearchList = <T,>({
         break;
 
       case "down":
+        if (filtered.length === 0) {
+          break;
+        }
+
         setSelectedIndex((i) => {
           const newIndex = Math.min(filtered.length - 1, i + 1);
           const sb = scrollRef.current;
@@ -141,8 +151,7 @@ export const DialogSearchList = <T,>({
                 flexDirection="row"
                 height={1}
                 overflow="hidden"
-                // TODO: Replace with theme coloring
-                backgroundColor={isSelected ? "#89B4FA" : undefined}
+                backgroundColor={isSelected ? colors.selection : undefined}
                 onMouseMove={() => {
                   setSelectedIndex(i);
 

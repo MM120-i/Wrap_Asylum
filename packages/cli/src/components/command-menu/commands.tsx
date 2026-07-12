@@ -22,6 +22,7 @@ export const COMMANDS: Command[] = [
         children: <text>Agent selection coming soon...</text>,
       });
     },
+    insertText: false,
   },
   {
     name: "models",
@@ -33,6 +34,7 @@ export const COMMANDS: Command[] = [
         children: <text>Model selection coming soon...</text>,
       });
     },
+    insertText: false,
   },
   {
     name: "sessions",
@@ -54,6 +56,7 @@ export const COMMANDS: Command[] = [
         children: <ThemeDialogContent />,
       });
     },
+    insertText: false,
   },
   {
     name: "login",

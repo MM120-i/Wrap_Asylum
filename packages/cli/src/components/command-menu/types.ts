@@ -12,4 +12,5 @@ export type Command = {
   description: string;
   value: string;
   action?: (ctx: CommandContext) => void | Promise<void>;
+  insertText?: boolean;
 };

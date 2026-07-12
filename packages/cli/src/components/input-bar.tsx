@@ -89,9 +89,11 @@ export const InputBar = ({ onSubmit, disabled = false }: Props) => {
         });
       }
 
-      textarea.insertText(command.value + " ");
+      if (command.insertText !== false) {
+        textarea.insertText(command.value + " ");
+      }
     },
-    [renderer, toast],
+    [renderer, toast, dialog],
   );
 
   const handleCommandExecute = useCallback(
