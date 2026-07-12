@@ -1,4 +1,11 @@
-import { useCallback, useRef, useState, useEffect, type ReactNode } from "react";
+import {
+  useCallback,
+  useRef,
+  useState,
+  useEffect,
+  type ReactNode,
+} from "react";
+
 import {
   ScrollBoxRenderable,
   TextAttributes,
