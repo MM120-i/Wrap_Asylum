@@ -1,11 +1,5 @@
-import { useParams } from "react-router";
+import { SessionShell } from "../components/session-shell";
 
 export const Session = () => {
-  const { id } = useParams();
-
-  return (
-    <box flexGrow={1} padding={2}>
-      <text>Session {id}</text>
-    </box>
-  );
+  return <SessionShell onSubmit={() => {}} inputDisabled loading />;
 };
