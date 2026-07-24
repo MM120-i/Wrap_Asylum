@@ -3,31 +3,14 @@ import { HTTPException } from "hono/http-exception";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { findSupportedChatModel } from "@warp-asylum/shared";
+import {
+  sessions,
+  nextId as _nextId,
+  type MockMessage,
+  type MockSession,
+} from "../store";
 
-type MockMessage = {
-  id: string;
-  role: string;
-  content: string;
-  mode: string;
-  model: string;
-  status: string;
-  parts: null;
-  duration: null;
-  createdAt: string;
-  sessionId: string;
-};
-
-type MockSession = {
-  id: string;
-  title: string;
-  cwd: string | null;
-  userId: string;
-  createdAt: string;
-  messages: MockMessage[];
-};
-
-const sessions: MockSession[] = [];
-let nextId = 1;
+let nextId = _nextId;
 
 const createSessionsSchema = z.object({
   title: z.string(),
