@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { HTTPException } from "hono/http-exception";
+// import { HTTPException } from "hono/http-exception";
 import { db } from "@warp-asylum/database";
 import { Role, Mode, MessageStatus } from "@warp-asylum/database/enums";
 import { zValidator } from "@hono/zod-validator";
