@@ -1,5 +1,7 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
+import { db } from "@warp-asylum/database";
+import { Role, Mode, MessageStatus } from "@warp-asylum/database/enums";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { findSupportedChatModel } from "@warp-asylum/shared";
@@ -18,9 +20,9 @@ const createSessionsSchema = z.object({
   cwd: z.string().optional(),
   initialMessage: z
     .object({
-      role: z.string(),
+      role: z.enum(Role),
       content: z.string(),
-      mode: z.string(),
+      mode: z.enum(Mode),
       model: z
         .string()
         .refine((id) => !!findSupportedChatModel(id), "Unsupported model"),
@@ -44,14 +46,17 @@ const createSessionValidator = zValidator(
 );
 
 const app = new Hono()
-  .get("/", (c) => {
-    const result = sessions.map(({ id, title, createdAt }) => ({
-      id,
-      title,
-      createdAt,
-    }));
+  .get("/", async (c) => {
+    const sessions = await db.session.findMany({
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        title: true,
+        createdAt: true,
+      },
+    });
 
-    return c.json(result);
+    return c.json(sessions);
   })
   .get("/:id", async (c) => {
     // await new Promise((r) => setTimeout(r, 5000)); // Simulates slow session loading
@@ -62,7 +67,16 @@ const app = new Hono()
     // });
 
     const id = c.req.param("id");
-    const session = sessions.find((s) => s.id === id);
+    const session = await db.session.findUnique({
+      where: { id },
+      include: {
+        messages: {
+          orderBy: {
+            createdAt: "asc",
+          },
+        },
+      },
+    });
 
     if (!session) {
       return c.json(
@@ -84,35 +98,24 @@ const app = new Hono()
     // });
 
     const { initialMessage, ...data } = c.req.valid("json");
-    const id = String(nextId++);
-    const now = new Date().toISOString();
-    const messages: MockMessage[] = [];
 
-    if (initialMessage) {
-      messages.push({
-        id: String(nextId++),
-        role: initialMessage.role,
-        content: initialMessage.content,
-        mode: initialMessage.mode,
-        model: initialMessage.model,
-        status: "COMPLETE",
-        parts: null,
-        duration: null,
-        createdAt: now,
-        sessionId: id,
-      });
-    }
-
-    const session: MockSession = {
-      id,
-      title: data.title,
-      cwd: data.cwd ?? null,
-      userId: "mock-user",
-      createdAt: now,
-      messages,
-    };
-
-    sessions.push(session);
+    const session = await db.session.create({
+      data: {
+        ...data,
+        userId: "mock-user",
+        ...(initialMessage && {
+          messages: {
+            create: {
+              ...initialMessage,
+              status: MessageStatus.COMPLETE,
+            },
+          },
+        }),
+      },
+      include: {
+        messages: true,
+      },
+    });
 
     return c.json(session, 201);
   });

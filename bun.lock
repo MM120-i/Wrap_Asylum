@@ -27,7 +27,7 @@
       },
     },
     "packages/database": {
-      "name": "@warpasylum/database",
+      "name": "@warp-asylum/database",
       "dependencies": {
         "@prisma/adapter-pg": "^7.9.1",
         "@prisma/client": "^7.9.1",
@@ -42,7 +42,9 @@
       "name": "@warp-asylum/server",
       "dependencies": {
         "@hono/zod-validator": "^0.9.0",
+        "@warp-asylum/database": "workspace:*",
         "@warp-asylum/shared": "workspace:*",
+        "dotenv": "^17.4.2",
         "hono": "^4.12.30",
         "zod": "^4.4.3",
       },
@@ -184,13 +186,13 @@
 
     "@visx/vendor": ["@visx/vendor@4.0.0-alpha.0", "", { "dependencies": { "@types/d3-array": "3.0.3", "@types/d3-color": "3.1.0", "@types/d3-delaunay": "6.0.1", "@types/d3-format": "3.0.1", "@types/d3-geo": "3.1.0", "@types/d3-interpolate": "3.0.1", "@types/d3-path": "3.1.1", "@types/d3-scale": "4.0.2", "@types/d3-shape": "3.1.7", "@types/d3-time": "3.0.0", "@types/d3-time-format": "2.1.0", "d3-array": "3.2.1", "d3-color": "3.1.0", "d3-delaunay": "6.0.2", "d3-format": "3.1.0", "d3-geo": "3.1.0", "d3-interpolate": "3.0.1", "d3-path": "3.1.0", "d3-scale": "4.0.2", "d3-shape": "3.2.0", "d3-time": "3.1.0", "d3-time-format": "4.1.0", "internmap": "2.0.3" } }, "sha512-6I+MuqXBcv9jnlcVowHoHKSdk9gXTWkHLKyqBwRWg7LY6A3Ei8SHfubpqGV5rBUSppxMq2RszPJUS6w+H0YgmQ=="],
 
+    "@warp-asylum/database": ["@warp-asylum/database@workspace:packages/database"],
+
     "@warp-asylum/server": ["@warp-asylum/server@workspace:packages/server"],
 
     "@warp-asylum/shared": ["@warp-asylum/shared@workspace:packages/shared"],
 
     "@warpasylum/cli": ["@warpasylum/cli@workspace:packages/cli"],
-
-    "@warpasylum/database": ["@warpasylum/database@workspace:packages/database"],
 
     "ajv": ["ajv@8.20.0", "", { "dependencies": { "fast-deep-equal": "^3.1.3", "fast-uri": "^3.0.1", "json-schema-traverse": "^1.0.0", "require-from-string": "^2.0.2" } }, "sha512-Thbli+OlOj+iMPYFBVBfJ3OmCAnaSyNn4M1vz9T6Gka5Jt9ba/HIR56joy65tY6kx/FCF5VXNB819Y7/GUrBGA=="],
 

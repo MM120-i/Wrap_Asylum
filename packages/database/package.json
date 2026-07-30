@@ -1,5 +1,5 @@
 {
-  "name": "@warpasylum/database",
+  "name": "@warp-asylum/database",
   "type": "module",
   "private": true,
   "exports": {
