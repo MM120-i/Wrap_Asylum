@@ -5,15 +5,7 @@ import { Role, Mode, MessageStatus } from "@warp-asylum/database/enums";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { findSupportedChatModel } from "@warp-asylum/shared";
-
-import {
-  sessions,
-  nextId as _nextId,
-  type MockMessage,
-  type MockSession,
-} from "../store";
-
-let nextId = _nextId;
+import * as Sentry from "@sentry/hono/bun";
 
 const createSessionsSchema = z.object({
   title: z.string(),
@@ -35,6 +27,11 @@ const createSessionValidator = zValidator(
   createSessionsSchema,
   (result, c) => {
     if (!result.success) {
+      Sentry.logger.warn("Session creation validation failed", {
+        path: c.req.path,
+        issues: result.error.issues.length,
+      });
+
       return c.json(
         {
           error: "Invalid request body",
@@ -56,6 +53,10 @@ const app = new Hono()
       },
     });
 
+    Sentry.logger.info("Listed sessions", {
+      count: sessions.length,
+    });
+
     return c.json(sessions);
   })
   .get("/:id", async (c) => {
@@ -67,6 +68,7 @@ const app = new Hono()
     // });
 
     const id = c.req.param("id");
+
     const session = await db.session.findUnique({
       where: { id },
       include: {
@@ -79,6 +81,11 @@ const app = new Hono()
     });
 
     if (!session) {
+      Sentry.logger.warn("Session not found", {
+        sessionId: id,
+        userId: "mock-user",
+      });
+
       return c.json(
         {
           error: "Session not found",
@@ -86,6 +93,10 @@ const app = new Hono()
         404,
       );
     }
+
+    Sentry.logger.info("Loaded session", {
+      sessionId: session.id,
+    });
 
     return c.json(session);
   })
