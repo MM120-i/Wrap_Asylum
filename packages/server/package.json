@@ -9,11 +9,14 @@
     "dev": "bun run --hot src/index.ts"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.27",
+    "@ai-sdk/openai": "^4.0.27",
     "@hono/zod-validator": "^0.9.0",
     "@sentry/bun": "^10.69.0",
     "@sentry/hono": "^10.69.0",
     "@warp-asylum/database": "workspace:*",
     "@warp-asylum/shared": "workspace:*",
+    "ai": "^7.0.47",
     "dotenv": "^17.4.2",
     "hono": "^4.12.30",
     "zod": "^4.4.3"

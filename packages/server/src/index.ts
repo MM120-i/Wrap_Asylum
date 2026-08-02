@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import sessions from "./routes/sessions";
-import { sessions as sessionList } from "./store";
 import { sentry } from "@sentry/hono/bun";
 import * as Sentry from "@sentry/hono/bun";
+import chat from "./routes/chat";
 
 const app = new Hono();
 
@@ -66,8 +66,7 @@ app.onError((error, c) => {
   );
 });
 
-const routes = app.route("/sessions", sessions);
-
+const routes = app.route("/sessions", sessions).route("/chat", chat);
 app.notFound((c) => c.json({ error: "Not found" }, 404));
 
 export type AppType = typeof routes;
