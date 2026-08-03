@@ -79,7 +79,7 @@ const streamAIResponse = async (
 
       if (part.type === "text-delta") {
         fullText += part.text;
-        const event: ChatStreamEvent = { type: "text-data", text: part.text };
+        const event: ChatStreamEvent = { type: "text-delta", text: part.text };
 
         await stream.writeSSE({
           event: "text-delta",
