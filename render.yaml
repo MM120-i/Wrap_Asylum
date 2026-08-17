@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: warp-asylum-server
+    runtime: bun
+    plan: free
+    buildCommand: bun install && cd packages/database && bunx prisma generate
+    startCommand: bun run packages/server/src/index.ts
+    healthCheckPath: /sessions
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: DATABASE_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: LOCAL_MODEL_BASE_URL
+        sync: false
