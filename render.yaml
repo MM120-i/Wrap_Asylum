@@ -1,7 +1,8 @@
 services:
   - type: web
     name: warp-asylum-server
-    runtime: bun
+    # Bun is provided by the JS/TS native runtime when a bun.lock is present
+    runtime: node
     plan: free
     buildCommand: bun install && cd packages/database && bunx prisma generate
     startCommand: bun run packages/server/src/index.ts
