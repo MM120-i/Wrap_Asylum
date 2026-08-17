@@ -171,10 +171,13 @@ const app = new Hono()
       );
     }
 
-    if (!isSupportedChatModel(lastMessage.mode)) {
-      return c.json({
-        error: `Session uses unsupported model: ${lastMessage.model}`,
-      });
+    if (!isSupportedChatModel(lastMessage.model)) {
+      return c.json(
+        {
+          error: `Session uses unsupported model: ${lastMessage.model}`,
+        },
+        400,
+      );
     }
 
     const history = buildConversationHistory(session.messages);

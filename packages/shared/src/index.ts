@@ -6,6 +6,9 @@ export {
   type SupportedProvider,
   type SupportedChatModel,
   type SupportedChatModelId,
+  type AnthropicChatModelId,
+  type OpenAIChatModelId,
+  type LocalChatModelId,
 } from "./models";
 
 export {

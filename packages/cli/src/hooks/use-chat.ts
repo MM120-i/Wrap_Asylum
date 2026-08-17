@@ -145,6 +145,7 @@ export const useChat = (sessionId: string, initialMessages: Message[]) => {
             content: message,
           },
         ]);
+
         return;
       }
 
@@ -174,6 +175,7 @@ export const useChat = (sessionId: string, initialMessages: Message[]) => {
               content: message,
             },
           ]);
+
           break;
         }
 
