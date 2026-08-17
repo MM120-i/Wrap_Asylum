@@ -8,6 +8,9 @@ import { apiClient } from "../lib/api-client";
 import { getErrorMessage } from "../lib/http-errors";
 import prettyMs from "pretty-ms";
 import { useChat } from "../hooks/use-chat";
+import { useKeyboard } from "@opentui/react";
+import { MessageStatus } from "@warp-asylum/database/enums";
+import { useKeyboardLayer } from "../providers/keyboard-layer";
 
 import {
   DEFAULT_CHAT_MODEL_ID,
@@ -52,6 +55,7 @@ const mapDbMessages = (dbMessages: SessionData["messages"]): Message[] => {
       mode: m.mode,
       parts: [{ type: "text", text: m.content }],
       ...(m.duration != null ? { duration: prettyMs(m.duration * 1000) } : {}),
+      interrupted: m.status === MessageStatus.INTERRUPTED,
     };
   });
 };
@@ -71,14 +75,15 @@ const ChatMessage = ({ msg }: { msg: Message }) => {
       mode={msg.mode}
       duration={msg.duration}
       streaming={false}
+      interrupted={msg.interrupted}
     />
   );
 };
 
 const SessionChat = ({ session }: { session: SessionData }) => {
+  const { isTopLayer } = useKeyboardLayer();
   const [initialMessages] = useState(() => mapDbMessages(session.messages));
-
-  const { messages, streaming, submit, abort } = useChat(
+  const { messages, streaming, submit, abort, interrupt } = useChat(
     session.id,
     initialMessages,
   );
@@ -87,12 +92,24 @@ const SessionChat = ({ session }: { session: SessionData }) => {
     return () => abort();
   }, [abort]);
 
+  useKeyboard((key) => {
+    if (
+      key.name === "escape" &&
+      isTopLayer("base") &&
+      streaming.status === "streaming"
+    ) {
+      key.preventDefault();
+      interrupt();
+    }
+  });
+
   return (
     <SessionShell
       onSubmit={(text) => {
         submit({ userText: text, mode: "BUILD", model: DEFAULT_CHAT_MODEL_ID });
       }}
       loading={streaming.status === "streaming"}
+      interruptible={streaming.status === "streaming"}
     >
       {messages.map((msg) => (
         <ChatMessage key={msg.id} msg={msg} />
