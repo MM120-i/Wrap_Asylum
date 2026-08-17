@@ -1,24 +1,71 @@
+import { Mode } from "@warp-asylum/database/enums";
+import type { ClientMessagePart } from "../../hooks/use-chat";
 import { useTheme } from "../../providers/theme";
+import { TextAttributes } from "@opentui/core";
 
 type Props = {
-  content: string;
+  parts: ClientMessagePart[];
   model: string;
+  mode: Mode;
+  duration?: string;
+  streaming?: boolean;
+  interrupted?: boolean;
 };
 
-export const BotMessage = ({ content, model }: Props) => {
+export const BotMessage = ({
+  parts,
+  model,
+  mode,
+  duration,
+  streaming = false,
+  interrupted = false,
+}: Props) => {
   const { colors } = useTheme();
+  const text = parts
+    .filter((part) => part.type === "text")
+    .map((part) => part.text)
+    .join("");
 
   return (
     <box width={"100%"} alignItems="center">
       <box paddingY={1} width={"100%"}>
         <box paddingX={3} width={"100%"}>
-          <text>{content}</text>
+          <text>{text}</text>
         </box>
       </box>
       <box paddingX={3} paddingBottom={1} gap={1} width={"100%"}>
         <box flexDirection="row" gap={2}>
-          <text fg={colors.primary}>&#x25C9;</text>
-          <text>{model}</text>
+          <text
+            attributes={interrupted ? TextAttributes.DIM : 0}
+            fg={
+              interrupted
+                ? undefined
+                : mode === Mode.PLAN
+                  ? colors.planMode
+                  : colors.primary
+            }
+          >
+            &#x25C9;
+          </text>
+          <box flexDirection="row" gap={1}>
+            <text attributes={interrupted ? TextAttributes.DIM : 0}>
+              {mode === Mode.PLAN ? "Plan" : "Build"}
+            </text>
+            <text attributes={TextAttributes.DIM} fg={colors.dimSeparator}>
+              &gt;
+            </text>
+            <text attributes={TextAttributes.DIM}>{model}</text>
+            {(duration || interrupted) && (
+              <>
+                <text attributes={TextAttributes.DIM} fg={colors.dimSeparator}>
+                  &gt;
+                </text>
+                <text attributes={TextAttributes.DIM}>
+                  {interrupted ? "interrupted" : duration}
+                </text>
+              </>
+            )}
+          </box>
         </box>
       </box>
     </box>
