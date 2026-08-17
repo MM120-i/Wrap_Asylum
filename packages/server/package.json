@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "build": "bun build src/index.ts --outdir dist --target bun",
-    "postinstall": "bun run -cwd ../database db:generate"
+    "postinstall": "bunx prisma generate --config ../database/prisma.config.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.27",

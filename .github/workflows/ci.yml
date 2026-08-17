@@ -9,6 +9,8 @@ jobs:
   check:
     name: Typecheck
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
     steps:
       - uses: actions/checkout@v4
 
@@ -20,8 +22,6 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Generate Prisma client
-        env:
-          DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
         run: cd packages/database && bunx prisma generate
 
       - name: Typecheck shared
