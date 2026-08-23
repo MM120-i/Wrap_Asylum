@@ -385,6 +385,7 @@ export const useChat = (sessionId: string, initialMessages: Message[]) => {
       };
 
       updateMessages((prev) => [...prev, userMessage]);
+
       await runStream({
         mode,
         model,
