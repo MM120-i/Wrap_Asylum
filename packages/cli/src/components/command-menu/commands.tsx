@@ -1,4 +1,11 @@
-import { ThemeDialogContent, SessionDialogContent } from "../dialogs";
+import { SUPPORTED_CHAT_MODELS } from "@warp-asylum/shared";
+import {
+  ThemeDialogContent,
+  SessionDialogContent,
+  AgentsDialogContent,
+  ModelsDialogContent,
+} from "../dialogs";
+
 import type { Command } from "./types";
 
 export const COMMANDS: Command[] = [
@@ -7,9 +14,7 @@ export const COMMANDS: Command[] = [
     description: "Start a new conversation",
     value: "/new",
     action: (ctx) => {
-      ctx.toast.show({
-        message: "Starting new conversation...",
-      });
+      ctx.navigate("/");
     },
   },
   {
@@ -18,8 +23,13 @@ export const COMMANDS: Command[] = [
     value: "/agents",
     action: (ctx) => {
       ctx.dialog.open({
-        title: "Select Mode",
-        children: <text>Agent selection coming soon...</text>,
+        title: "Select Agent",
+        children: (
+          <AgentsDialogContent
+            currentMode={ctx.mode}
+            onSelectMode={ctx.setMode}
+          />
+        ),
       });
     },
     insertText: false,
@@ -31,7 +41,12 @@ export const COMMANDS: Command[] = [
     action: (ctx) => {
       ctx.dialog.open({
         title: "Select Model",
-        children: <text>Model selection coming soon...</text>,
+        children: (
+          <ModelsDialogContent
+            models={SUPPORTED_CHAT_MODELS.map((model) => model.id)}
+            onSelectModel={ctx.setModel}
+          />
+        ),
       });
     },
     insertText: false,
