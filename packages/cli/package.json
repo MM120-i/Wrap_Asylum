@@ -8,7 +8,7 @@
   },
   "devDependencies": {
     "@warp-asylum/server": "workspace:*",
-    "@types/bun": "latest",
+    "@types/bun": "1.4.0",
     "@types/react": "^19.2.17"
   },
   "peerDependencies": {
