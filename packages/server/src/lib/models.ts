@@ -12,25 +12,61 @@ import type {
   LocalChatModelId,
 } from "@warp-asylum/shared";
 
+import type { ProviderOptions } from "@ai-sdk/provider-utils";
 import type { LanguageModel } from "ai";
 
 export type ResolveModel = {
   model: LanguageModel;
   provider: SupportedProvider;
   modelId: SupportedChatModelId;
+  providerOptions?: ProviderOptions;
 };
+
+type AnthropicModelId = AnthropicChatModelId;
+type OpenAIModelId = OpenAIChatModelId;
+
+const ANTHROPIC_PROVIDER_OPTIONS: Partial<
+  Record<AnthropicModelId, ProviderOptions>
+> = {
+  "claude-opus-4-6": {
+    anthropic: {
+      thinking: {
+        type: "enabled",
+        budgetTokens: 10000,
+      },
+    },
+  },
+  "claude-sonnet-4-6": {
+    anthropic: {
+      thinking: {
+        type: "enabled",
+        budgetTokens: 10000,
+      },
+    },
+  },
+};
+
+const OPENAI_PROVIDER_OPTIONS: Partial<Record<OpenAIModelId, ProviderOptions>> =
+  {
+    "gpt-5.4": {
+      openai: {
+        thinking: {
+          reasoningSummary: "detailed",
+        },
+      },
+    },
+  };
 
 const assertUnsupportedProvider = (provider: never): never => {
   throw new Error(`Unsupported provider: ${provider}`);
 };
 
-const resolveAnthropicModel = (
-  modelId: AnthropicChatModelId,
-): ResolveModel => {
+const resolveAnthropicModel = (modelId: AnthropicChatModelId): ResolveModel => {
   return {
     model: anthropic(modelId),
     provider: "anthropic",
     modelId,
+    providerOptions: ANTHROPIC_PROVIDER_OPTIONS[modelId],
   };
 };
 
@@ -39,6 +75,7 @@ const resolveOpenAiModel = (modelId: OpenAIChatModelId): ResolveModel => {
     model: openai(modelId),
     provider: "openai",
     modelId,
+    providerOptions: OPENAI_PROVIDER_OPTIONS[modelId],
   };
 };
 

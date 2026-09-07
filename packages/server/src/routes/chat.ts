@@ -5,8 +5,17 @@ import { zValidator } from "@hono/zod-validator";
 import { streamText as aiStreamText } from "ai";
 import { db } from "@warp-asylum/database";
 import { Mode, MessageStatus } from "@warp-asylum/database/enums";
-import { type ChatStreamEvent } from "@warp-asylum/shared";
 import { isSupportedChatModel, resolvedChatModel } from "../lib/models";
+
+import {
+  type ChatStreamEvent,
+  type MessagePart,
+  toolCallArgsSchema,
+  messagePartsSchema,
+  messagePartSchema,
+} from "@warp-asylum/shared";
+
+import type { Prisma } from "@warp-asylum/database";
 
 const submitSchema = z.object({
   content: z.string(),
@@ -80,15 +89,23 @@ const streamAIResponse = async (
 ) => {
   const { sessionId, model, history, mode, abortController } = params;
   const startTime = Date.now();
+  const parts: MessagePart[] = [];
   const resolveModel = resolvedChatModel(model);
-  let fullText = "";
 
   const persistInterruptedMessage = async () => {
-    if (fullText.length === 0) {
+    const fullText = parts
+      .filter((p) => p.type === "text")
+      .map((p) => p.text)
+      .join("");
+
+    if (fullText.length === 0 && parts.length === 0) {
       return;
     }
 
     const elapsedMs = Date.now() - startTime;
+
+    const validatedParts: Prisma.InputJsonValue | undefined =
+      parts.length > 0 ? messagePartSchema.parse(parts) : undefined;
 
     await db.message.create({
       data: {
@@ -97,6 +114,7 @@ const streamAIResponse = async (
         status: MessageStatus.COMPLETE,
         model,
         content: fullText,
+        parts: validatedParts,
         mode,
         duration: Math.round(elapsedMs / 1000),
       },
@@ -108,6 +126,7 @@ const streamAIResponse = async (
       model: resolveModel.model,
       messages: history,
       abortSignal: abortController.signal,
+      providerOptions: resolveModel.providerOptions,
     });
 
     for await (const part of result.stream) {
@@ -115,12 +134,89 @@ const streamAIResponse = async (
         break;
       }
 
+      if (part.type === "reasoning-delta") {
+        const last = parts[parts.length - 1];
+
+        if (last && last.type === "reasoning") {
+          last.text += part.text;
+        } else {
+          parts.push({ type: "reasoning", text: part.text });
+        }
+
+        const event: ChatStreamEvent = {
+          type: "reasoning-delta",
+          text: part.text,
+        };
+
+        await stream.writeSSE({
+          event: "reasoning-delta",
+          data: JSON.stringify(event),
+        });
+      }
+
       if (part.type === "text-delta") {
-        fullText += part.text;
+        const last = parts[parts.length - 1];
+
+        if (last && last.type === "text") {
+          last.text += part.text;
+        } else {
+          parts.push({ type: "text", text: part.text });
+        }
+
         const event: ChatStreamEvent = { type: "text-delta", text: part.text };
 
         await stream.writeSSE({
           event: "text-delta",
+          data: JSON.stringify(event),
+        });
+      }
+
+      if (part.type === "tool-call") {
+        const args = toolCallArgsSchema.parse(part.input);
+
+        parts.push({
+          type: "tool-call",
+          id: part.toolCallId,
+          name: part.toolName,
+          args,
+        });
+
+        const event: ChatStreamEvent = {
+          type: "tool-call",
+          toolCallId: part.toolCallId,
+          toolName: part.toolName,
+          args,
+        };
+
+        await stream.writeSSE({
+          event: "tool-call",
+          data: JSON.stringify(event),
+        });
+      }
+
+      if (part.type == "tool-result") {
+        const resultStr =
+          typeof part.output === "string"
+            ? part.output
+            : JSON.stringify(part.output);
+
+        const tcPart = parts.find(
+          (p): p is Extract<MessagePart, { type: "tool-call" }> =>
+            p.type === "tool-call" && p.id === part.toolCallId,
+        );
+
+        if (tcPart) {
+          tcPart.result = resultStr;
+        }
+
+        const event: ChatStreamEvent = {
+          type: "tool-result",
+          toolCallId: part.toolCallId,
+          result: resultStr,
+        };
+
+        await stream.writeSSE({
+          event: "tool-result",
           data: JSON.stringify(event),
         });
       }
@@ -137,6 +233,14 @@ const streamAIResponse = async (
 
     const elapsedMs = Date.now() - startTime;
 
+    const fullText = parts
+      .filter((p) => p.type === "text")
+      .map((p) => p.text)
+      .join("");
+
+    const validatedParts: Prisma.InputJsonValue | undefined =
+      parts.length > 0 ? messagePartsSchema.parse(parts) : undefined;
+
     const assistantMessage = await db.message.create({
       data: {
         sessionId,
@@ -144,6 +248,7 @@ const streamAIResponse = async (
         status: MessageStatus.COMPLETE,
         model,
         content: fullText,
+        parts: validatedParts,
         mode,
         duration: Math.round(elapsedMs / 1000),
       },
