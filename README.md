@@ -170,14 +170,14 @@ Press Tab to switch between:
 
 Commands are entered by typing `/` in the input box. Useful commands include:
 
-| Command | What it does |
-| --- | --- |
-| `/new` | Start a new conversation |
-| `/agents` | Switch between Plan and Build modes |
-| `/models` | Choose an AI model |
-| `/sessions` | Browse saved conversations |
-| `/theme` | Change the terminal theme |
-| `/exit` | Close the application |
+| Command     | What it does                        |
+| ----------- | ----------------------------------- |
+| `/new`      | Start a new conversation            |
+| `/agents`   | Switch between Plan and Build modes |
+| `/models`   | Choose an AI model                  |
+| `/sessions` | Browse saved conversations          |
+| `/theme`    | Change the terminal theme           |
+| `/exit`     | Close the application               |
 
 File operations are restricted to the selected project directory, including
 checks for path traversal and symlink escapes. Shell commands run with limited
@@ -264,4 +264,4 @@ Run `ollama list` and make sure `DEFAULT_CHAT_MODEL` uses the exact model name.
 
 ## License
 
-No license has been selected for this project yet.
+MIT
