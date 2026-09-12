@@ -1,7 +1,11 @@
 import { z } from "zod";
-import { resolve, relative, join } from "path";
+import { relative, join } from "path";
 import { readdir, stat } from "fs/promises";
 import { tool } from "ai";
+import {
+  ProjectPathError,
+  resolveExistingProjectPath,
+} from "./path-security";
 
 export const createListDirectoryTool = (cwd: string) => {
   return tool({
@@ -16,13 +20,11 @@ export const createListDirectoryTool = (cwd: string) => {
         .default("."),
     }),
     execute: async ({ path }: { path: string }) => {
-      const resolved = resolve(cwd, path);
-
-      if (!resolved.startsWith(cwd)) {
-        return { error: "Path is outside the project directory" };
-      }
-
       try {
+        const { root, path: resolved } = await resolveExistingProjectPath(
+          cwd,
+          path,
+        );
         const entries = await readdir(resolved);
 
         const results: {
@@ -45,22 +47,27 @@ export const createListDirectoryTool = (cwd: string) => {
             });
           } catch {}
 
-          results.sort((a, b) => {
-            if (a.type !== b.type) {
-              return a.type === "directory" ? -1 : 1;
-            }
-
-            return a.name.localeCompare(b.name);
-          });
-
-          return {
-            path: relative(cwd, resolved) || ".",
-            entries: results,
-          };
         }
+
+        results.sort((a, b) => {
+          if (a.type !== b.type) {
+            return a.type === "directory" ? -1 : 1;
+          }
+
+          return a.name.localeCompare(b.name);
+        });
+
+        return {
+          path: relative(root, resolved) || ".",
+          entries: results,
+        };
       } catch (error) {
+        if (error instanceof ProjectPathError) {
+          return { error: error.message };
+        }
+
         const message = error instanceof Error ? error.message : String(error);
-        return { error: `Failed to write file: ${message}` };
+        return { error: `Failed to list directory: ${message}` };
       }
     },
   });

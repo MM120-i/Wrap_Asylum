@@ -14,7 +14,6 @@ import {
   type MessagePart,
   toolCallArgsSchema,
   messagePartsSchema,
-  messagePartSchema,
 } from "@warp-asylum/shared";
 
 import type { Prisma } from "@warp-asylum/database";
@@ -111,7 +110,7 @@ const streamAIResponse = async (
     const elapsedMs = Date.now() - startTime;
 
     const validatedParts: Prisma.InputJsonValue | undefined =
-      parts.length > 0 ? messagePartSchema.parse(parts) : undefined;
+      parts.length > 0 ? messagePartsSchema.parse(parts) : undefined;
 
     await db.message.create({
       data: {

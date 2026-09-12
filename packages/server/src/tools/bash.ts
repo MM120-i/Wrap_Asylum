@@ -2,6 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 
 const MAX_OUTPUT = 20_000;
+const MAX_OUTPUT_BYTES = 1_000_000;
 const DEFAULT_TIMEOUT = 30_000;
 
 export const createBashTool = (cwd: string) => {
@@ -20,8 +21,19 @@ export const createBashTool = (cwd: string) => {
         const proc = Bun.spawn(["bash", "-c", command], {
           cwd,
           stdout: "pipe",
+          stderr: "pipe",
           stdin: "pipe",
-          env: { ...process.env, TERM: "dumb" },
+          maxBuffer: MAX_OUTPUT_BYTES,
+          env: {
+            PATH: process.env.PATH ?? "",
+            HOME: cwd,
+            USERPROFILE: cwd,
+            PWD: cwd,
+            TEMP: cwd,
+            TMP: cwd,
+            TERM: "dumb",
+            LANG: "C.UTF-8",
+          },
         });
 
         const timer = setTimeout(() => {

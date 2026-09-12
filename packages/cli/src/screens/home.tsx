@@ -37,7 +37,7 @@ export const Home = () => {
         <InputBar onSubmit={handleSubmit} />
         <box flexDirection="row" gap={1} flexShrink={0} marginLeft={"auto"}>
           <text>tab</text>
-          <text attributes={TextAttributes.DIM}>agents</text>
+          <text attributes={TextAttributes.DIM}>mode</text>
         </box>
       </box>
     </box>

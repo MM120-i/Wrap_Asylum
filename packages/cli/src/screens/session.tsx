@@ -55,7 +55,9 @@ const mapDbMessages = (dbMessages: SessionData["messages"]): Message[] => {
       ? parsedParts.data.map((p) =>
           p.type === "tool-call" ? { ...p, status: "done" as const } : p,
         )
-      : [];
+      : m.content.length > 0
+        ? [{ type: "text", text: m.content }]
+        : [];
 
     return {
       id: m.id,

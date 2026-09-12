@@ -1,6 +1,9 @@
 import { z } from "zod";
-import { resolve, relative } from "path";
 import { readFile } from "fs/promises";
+import {
+  ProjectPathError,
+  resolveExistingProjectPath,
+} from "./path-security";
 
 const MAX_FILE_SIZE = 10_000;
 
@@ -12,21 +15,8 @@ export const createReadFileTool = (cwd: string) => {
       path: z.string().describe("Relative path to the file to write"),
     }),
     execute: async ({ path }: { path: string }) => {
-      const resolved = resolve(cwd, path);
-      const rel = relative(cwd, resolved);
-
-      if (
-        rel.startsWith("..") ||
-        (resolve(resolved) !== resolved && rel.startsWith(".."))
-      ) {
-        return { error: "Path is outside the project directory" };
-      }
-
-      if (!resolved.startsWith(cwd)) {
-        return { error: "Path is outside the project directory" };
-      }
-
       try {
+        const { path: resolved } = await resolveExistingProjectPath(cwd, path);
         const content = await readFile(resolved, "utf-8");
 
         if (content.length > MAX_FILE_SIZE) {
@@ -36,9 +26,19 @@ export const createReadFileTool = (cwd: string) => {
             totalLength: content.length,
           };
         }
+
+        return {
+          content,
+          truncated: false,
+          totalLength: content.length,
+        };
       } catch (error) {
+        if (error instanceof ProjectPathError) {
+          return { error: error.message };
+        }
+
         const message = error instanceof Error ? error.message : String(error);
-        return { error: `Failed to write file: ${message}` };
+        return { error: `Failed to read file: ${message}` };
       }
     },
   };

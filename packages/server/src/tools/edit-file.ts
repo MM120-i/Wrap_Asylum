@@ -1,7 +1,8 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { resolve, relative } from "path";
+import { relative } from "path";
 import { readFile, writeFile } from "fs/promises";
+import { ProjectPathError, resolveExistingProjectPath } from "./path-security";
 
 export const createEditFileTool = (cwd: string) => {
   return tool({
@@ -17,13 +18,12 @@ export const createEditFileTool = (cwd: string) => {
       newString: z.string().describe("The text to replace it with"),
     }),
     execute: async ({ path, oldString, newString }) => {
-      const resolved = resolve(cwd, path);
-
-      if (!resolved.startsWith(cwd)) {
-        return { error: "Path is outside the project directory" };
-      }
-
       try {
+        const { root, path: resolved } = await resolveExistingProjectPath(
+          cwd,
+          path,
+        );
+
         const content = await readFile(resolved, "utf-8");
         const occurences = content.split(oldString).length - 1;
 
@@ -42,9 +42,13 @@ export const createEditFileTool = (cwd: string) => {
 
         return {
           success: true as const,
-          path: relative(cwd, resolved),
+          path: relative(root, resolved),
         };
       } catch (error) {
+        if (error instanceof ProjectPathError) {
+          return { error: error.message };
+        }
+
         const message = error instanceof Error ? error.message : String(error);
         return { error: `Failed to edit file: ${message}` };
       }

@@ -1,6 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { resolve, relative } from "path";
+import { relative, resolve } from "path";
+import { ProjectPathError, resolveExistingProjectPath } from "./path-security";
 
 const MAX_MATCHES = 50;
 
@@ -20,33 +21,34 @@ export const createGrepTool = (cwd: string) => {
         .optional(),
     }),
     execute: async ({ pattern, path, include }) => {
-      const resolved = resolve(cwd, path);
-
-      if (!resolved.startsWith(cwd)) {
-        return { error: "Path is outside the project directory" };
-      }
-
       try {
+        const { root, path: resolved } = await resolveExistingProjectPath(
+          cwd,
+          path,
+        );
+
         let truncated = false;
 
         const args = [
-          "--rn",
+          "-r",
+          "-n",
           "--color=never",
-          "--execute-dir=node_modules",
-          "--execlude-dir=.git",
+          "--exclude-dir=node_modules",
+          "--exclude-dir=.git",
           "-E",
         ];
 
         if (include) {
-          args.push(`---include=${include}`);
+          args.push(`--include=${include}`);
         }
 
-        args.push(pattern, resolved);
+        args.push(pattern, ".");
 
         const proc = Bun.spawn(["grep", ...args], {
           stdout: "pipe",
+          stderr: "pipe",
           stdin: "pipe",
-          cwd,
+          cwd: resolved,
         });
 
         const stdout = await new Response(proc.stdout).text();
@@ -85,7 +87,7 @@ export const createGrepTool = (cwd: string) => {
 
           if (match) {
             matches.push({
-              file: relative(cwd, match[1]!),
+              file: relative(root, resolve(resolved, match[1]!)),
               line: parseInt(match[2]!, 10),
               content: match[3]!,
             });
@@ -97,6 +99,10 @@ export const createGrepTool = (cwd: string) => {
           ...(truncated ? { truncated: true, totalMatches: lines.length } : {}),
         };
       } catch (error) {
+        if (error instanceof ProjectPathError) {
+          return { error: error.message };
+        }
+
         const message = error instanceof Error ? error.message : String(error);
         return { error: `Failed to execute command: ${message}` };
       }

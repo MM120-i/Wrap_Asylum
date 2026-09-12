@@ -1,6 +1,10 @@
 import { z } from "zod";
-import { resolve, relative, dirname } from "path";
+import { relative, dirname } from "path";
 import { writeFile, mkdir } from "fs/promises";
+import {
+  ProjectPathError,
+  resolveWritableProjectPath,
+} from "./path-security";
 
 export const createWriteFileTool = (cwd: string) => {
   return {
@@ -11,22 +15,24 @@ export const createWriteFileTool = (cwd: string) => {
       content: z.string().describe("The full content to write to the file"),
     }),
     execute: async ({ path, content }: { path: string; content: string }) => {
-      const resolved = resolve(cwd, path);
-
-      if (!resolved.startsWith(cwd)) {
-        return { error: "Path is outside the project directory" };
-      }
-
       try {
+        const { root, path: resolved } = await resolveWritableProjectPath(
+          cwd,
+          path,
+        );
         await mkdir(dirname(resolved), { recursive: true });
         await writeFile(resolved, content, "utf-8");
 
         return {
           success: true as const,
-          path: relative(cwd, resolved),
+          path: relative(root, resolved),
           bytesWritten: Buffer.byteLength(content, "utf-8"),
         };
       } catch (error) {
+        if (error instanceof ProjectPathError) {
+          return { error: error.message };
+        }
+
         const message = error instanceof Error ? error.message : String(error);
         return { error: `Failed to write file: ${message}` };
       }

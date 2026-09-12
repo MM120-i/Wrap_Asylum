@@ -1,6 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { resolve, relative } from "path";
+import { relative, resolve } from "path";
+import { ProjectPathError, resolveExistingProjectPath } from "./path-security";
 
 const MAX_RESULTS = 200;
 
@@ -18,13 +19,12 @@ export const createGlobTool = (cwd: string) => {
         .default("."),
     }),
     execute: async ({ pattern, path }) => {
-      const resolved = resolve(cwd, path);
-
-      if (!resolved.startsWith(cwd)) {
-        return { error: "Path is outside the project directory" };
-      }
-
       try {
+        const { root, path: resolved } = await resolveExistingProjectPath(
+          cwd,
+          path,
+        );
+
         const glob = new Bun.Glob(pattern);
         const files: string[] = [];
         let truncated = false;
@@ -44,7 +44,7 @@ export const createGlobTool = (cwd: string) => {
           }
 
           const absoluteMatch = resolve(resolved, match);
-          files.push(relative(cwd, absoluteMatch));
+          files.push(relative(root, absoluteMatch));
         }
 
         files.sort();
@@ -54,6 +54,10 @@ export const createGlobTool = (cwd: string) => {
           ...(truncated ? { truncated: true } : {}),
         };
       } catch (error) {
+        if (error instanceof ProjectPathError) {
+          return { error: error.message };
+        }
+
         const message = error instanceof Error ? error.message : String(error);
         return { error: `Failed to execute command: ${message}` };
       }

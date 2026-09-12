@@ -50,9 +50,7 @@ const OPENAI_PROVIDER_OPTIONS: Partial<Record<OpenAIModelId, ProviderOptions>> =
   {
     "gpt-5.4": {
       openai: {
-        thinking: {
-          reasoningSummary: "detailed",
-        },
+        reasoningSummary: "detailed",
       },
     },
   };
