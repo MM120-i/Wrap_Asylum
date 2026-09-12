@@ -6,6 +6,7 @@ import { streamText as aiStreamText } from "ai";
 import { db } from "@warp-asylum/database";
 import { Mode, MessageStatus } from "@warp-asylum/database/enums";
 import { isSupportedChatModel, resolvedChatModel } from "../lib/models";
+import { buildSystemPrompt } from "../system.prompt";
 
 import {
   type ChatStreamEvent,
@@ -74,6 +75,7 @@ const getResumeUserMessage = (
 
 type StreamParams = {
   sessionId: string;
+  cwd: string | null;
   model: string;
   history: {
     role: "user" | "assistant";
@@ -87,7 +89,7 @@ const streamAIResponse = async (
   stream: Parameters<Parameters<typeof streamSSE>[1]>[0],
   params: StreamParams,
 ) => {
-  const { sessionId, model, history, mode, abortController } = params;
+  const { sessionId, cwd, model, history, mode, abortController } = params;
   const startTime = Date.now();
   const parts: MessagePart[] = [];
   const resolveModel = resolvedChatModel(model);
@@ -124,6 +126,7 @@ const streamAIResponse = async (
   try {
     const result = aiStreamText({
       model: resolveModel.model,
+      system: buildSystemPrompt({ cwd, mode }),
       messages: history,
       abortSignal: abortController.signal,
       providerOptions: resolveModel.providerOptions,
@@ -349,6 +352,7 @@ const app = new Hono()
           try {
             await streamAIResponse(stream, {
               sessionId,
+              cwd: session.cwd,
               model: resumeableMessage.model,
               history,
               mode: resumeableMessage.mode,
@@ -430,6 +434,7 @@ const app = new Hono()
 
         await streamAIResponse(stream, {
           sessionId,
+          cwd: session.cwd,
           model: data.model,
           history,
           mode: data.mode,
