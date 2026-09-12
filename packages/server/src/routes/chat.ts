@@ -2,11 +2,12 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { streamSSE } from "hono/streaming";
 import { zValidator } from "@hono/zod-validator";
-import { streamText as aiStreamText } from "ai";
+import { streamText as aiStreamText, stepCountIs } from "ai";
 import { db } from "@warp-asylum/database";
 import { Mode, MessageStatus } from "@warp-asylum/database/enums";
 import { isSupportedChatModel, resolvedChatModel } from "../lib/models";
 import { buildSystemPrompt } from "../system.prompt";
+import { createTools } from "../tools";
 
 import {
   type ChatStreamEvent,
@@ -17,6 +18,8 @@ import {
 } from "@warp-asylum/shared";
 
 import type { Prisma } from "@warp-asylum/database";
+
+const LLM_STEPS = 50;
 
 const submitSchema = z.object({
   content: z.string(),
@@ -91,6 +94,7 @@ const streamAIResponse = async (
 ) => {
   const { sessionId, cwd, model, history, mode, abortController } = params;
   const startTime = Date.now();
+  const tools = cwd ? createTools(cwd, mode) : undefined;
   const parts: MessagePart[] = [];
   const resolveModel = resolvedChatModel(model);
 
@@ -128,6 +132,8 @@ const streamAIResponse = async (
       model: resolveModel.model,
       system: buildSystemPrompt({ cwd, mode }),
       messages: history,
+      tools,
+      stopWhen: tools ? stepCountIs(LLM_STEPS) : undefined,
       abortSignal: abortController.signal,
       providerOptions: resolveModel.providerOptions,
     });

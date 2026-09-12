@@ -11,14 +11,15 @@ import { useChat } from "../hooks/use-chat";
 import { useKeyboard } from "@opentui/react";
 import { MessageStatus } from "@warp-asylum/database/enums";
 import { useKeyboardLayer } from "../providers/keyboard-layer";
+import { usePromptConfig } from "../providers/prompt-config";
 
 import {
-  DEFAULT_CHAT_MODEL_ID,
+  messagePartsSchema,
   type SupportedChatModelId,
 } from "@warp-asylum/shared";
 
 import type { InferResponseType } from "hono/client";
-import type { Message, ClientMessagePart } from "../hooks/use-chat";
+import type { ClientMessagePart, Message } from "../hooks/use-chat";
 
 type SessionData = InferResponseType<
   (typeof apiClient.sessions)[":id"]["$get"],
@@ -47,13 +48,22 @@ const mapDbMessages = (dbMessages: SessionData["messages"]): Message[] => {
       };
     }
 
+    const parsedParts =
+      m.parts == null ? null : messagePartsSchema.safeParse(m.parts);
+
+    const parts: ClientMessagePart[] = parsedParts?.success
+      ? parsedParts.data.map((p) =>
+          p.type === "tool-call" ? { ...p, status: "done" as const } : p,
+        )
+      : [];
+
     return {
       id: m.id,
       role: "assistant",
       content: m.content,
       model: m.model as SupportedChatModelId,
       mode: m.mode,
-      parts: [{ type: "text", text: m.content }],
+      parts,
       ...(m.duration != null ? { duration: prettyMs(m.duration * 1000) } : {}),
       interrupted: m.status === MessageStatus.INTERRUPTED,
     };
@@ -63,7 +73,7 @@ const mapDbMessages = (dbMessages: SessionData["messages"]): Message[] => {
 const ChatMessage = ({ msg }: { msg: Message }) => {
   switch (msg.role) {
     case "user":
-      return <UserMessage message={msg.content} />;
+      return <UserMessage message={msg.content} mode={msg.mode} />;
     case "error":
       return <ErrorMessage message={msg.content} />;
   }
@@ -81,6 +91,7 @@ const ChatMessage = ({ msg }: { msg: Message }) => {
 };
 
 const SessionChat = ({ session }: { session: SessionData }) => {
+  const { mode, model } = usePromptConfig();
   const { isTopLayer } = useKeyboardLayer();
   const [initialMessages] = useState(() => mapDbMessages(session.messages));
   const { messages, streaming, submit, abort, interrupt } = useChat(
@@ -105,9 +116,7 @@ const SessionChat = ({ session }: { session: SessionData }) => {
 
   return (
     <SessionShell
-      onSubmit={(text) => {
-        submit({ userText: text, mode: "BUILD", model: DEFAULT_CHAT_MODEL_ID });
-      }}
+      onSubmit={(text) => submit({ userText: text, mode, model })}
       loading={streaming.status === "streaming"}
       interruptible={streaming.status === "streaming"}
     >

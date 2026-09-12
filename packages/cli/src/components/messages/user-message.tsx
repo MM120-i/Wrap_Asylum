@@ -1,15 +1,21 @@
 import { useTheme } from "../../providers/theme";
+import { Mode } from "@warp-asylum/database/enums";
 
 type Props = {
   message: string;
+  mode: Mode;
 };
 
-export const UserMessage = ({ message }: Props) => {
+export const UserMessage = ({ message, mode }: Props) => {
   const { colors } = useTheme();
 
   return (
     <box width={"100%"} alignItems="center">
-      <box border={["left"]} borderColor={colors.primary} width={"100%"}>
+      <box
+        border={["left"]}
+        borderColor={mode === Mode.PLAN ? colors.planMode : colors.primary}
+        width={"100%"}
+      >
         <box
           justifyContent="center"
           paddingX={2}

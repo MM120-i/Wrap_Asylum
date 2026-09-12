@@ -3,7 +3,7 @@ import { z } from "zod";
 import { resolve, relative } from "path";
 import { readFile, writeFile } from "fs/promises";
 
-export const createBashTool = (cwd: string) => {
+export const createEditFileTool = (cwd: string) => {
   return tool({
     description:
       "Make a targeted edit to a file by replacing an exact string match. The oldString must appear exactly once in the file (for safety). Use this for sugrical edits instead of rewriting entire files.",
