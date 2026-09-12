@@ -12,10 +12,19 @@ import {
 import type { ClientResponse } from "hono/client";
 import type { Mode } from "@warp-asylum/database/enums";
 
-export type ClientMessagePart = {
-  type: "text";
-  text: string;
+export type ClientToolCallPart = {
+  type: "tool-call";
+  id: string;
+  name: string;
+  args: Record<string, unknown>;
+  result?: string;
+  status: "calling" | "done";
 };
+
+export type ClientMessagePart =
+  | { type: "reasoning"; text: string }
+  | ClientToolCallPart
+  | { type: "text"; text: string };
 
 export type Message =
   | {
@@ -211,6 +220,44 @@ export const useChat = (sessionId: string, initialMessages: Message[]) => {
         }
 
         switch (event.type) {
+          case "reasoning-delta":
+            const lastPart = parts[parts.length - 1];
+
+            if (lastPart && lastPart.type === "reasoning") {
+              lastPart.text += event.text;
+            } else {
+              parts.push({ type: "reasoning", text: event.text });
+            }
+
+            emitParts(activeStream.requestedId, parts);
+            break;
+
+          case "tool-call":
+            parts.push({
+              type: "tool-call",
+              id: event.toolCallId,
+              name: event.toolName,
+              args: event.args,
+              status: "calling",
+            });
+
+            emitParts(activeStream.requestedId, parts);
+            break;
+
+          case "tool-result":
+            const tc = parts.find(
+              (p): p is ClientToolCallPart =>
+                p.type === "tool-call" && p.id === event.toolCallId,
+            );
+
+            if (tc) {
+              tc.result = event.result;
+              tc.status = "done";
+            }
+
+            emitParts(activeStream.requestedId, parts);
+            break;
+
           case "text-delta":
             const last = parts[parts.length - 1];
 
