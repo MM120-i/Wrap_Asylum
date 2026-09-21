@@ -3,6 +3,9 @@ import { realpath } from "fs/promises";
 
 export class ProjectPathError extends Error {}
 
+export const normalizeProjectPath = (requestedPath: string) =>
+  requestedPath.startsWith("@") ? requestedPath.slice(1) : requestedPath;
+
 const isWithinProject = (root: string, target: string) => {
   const rel = relative(root, target);
 
@@ -23,7 +26,7 @@ export const resolveExistingProjectPath = async (
   requestedPath: string,
 ) => {
   const root = await realpath(cwd);
-  const candidate = resolve(root, requestedPath);
+  const candidate = resolve(root, normalizeProjectPath(requestedPath));
   const target = await realpath(candidate);
 
   assertWithinProject(root, target);
@@ -36,7 +39,7 @@ export const resolveWritableProjectPath = async (
   requestedPath: string,
 ) => {
   const root = await realpath(cwd);
-  const candidate = resolve(root, requestedPath);
+  const candidate = resolve(root, normalizeProjectPath(requestedPath));
   const missingSegments: string[] = [];
   let current = candidate;
 
