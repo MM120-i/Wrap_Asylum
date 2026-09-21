@@ -7,6 +7,41 @@ import chat from "./routes/chat";
 
 const app = new Hono();
 
+app.get("/auth/callback", (c) => {
+  const state = c.req.query("state");
+
+  if (!state) {
+    return c.text("Missing OAuth state", 400);
+  }
+
+  try {
+    const [encodedState] = state.split(".");
+    const payload = JSON.parse(
+      Buffer.from(encodedState!, "base64url").toString("utf8"),
+    ) as { port?: unknown };
+    const port = payload.port;
+
+    if (
+      typeof port !== "number" ||
+      !Number.isInteger(port) ||
+      port < 1 ||
+      port > 65535
+    ) {
+      return c.text("Invalid OAuth callback port", 400);
+    }
+
+    const callbackUrl = new URL(`http://127.0.0.1:${port}/callback`);
+
+    for (const [key, value] of new URL(c.req.url).searchParams) {
+      callbackUrl.searchParams.append(key, value);
+    }
+
+    return c.redirect(callbackUrl.toString());
+  } catch {
+    return c.text("Invalid OAuth state", 400);
+  }
+});
+
 app.use(
   sentry(app, {
     dsn: "https://65a4679f77b44b9e50df32cd3a29a108@o4507637662351360.ingest.us.sentry.io/4511831525949440",

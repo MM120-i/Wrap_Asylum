@@ -106,7 +106,7 @@ export const performLogin = async () => {
         }
 
         try {
-          const redirectUri = `${apiUrl}/auth/callback`;
+          const redirectUri = `${apiUrl.replace(/\/$/, "")}/auth/callback`;
 
           const tokenRes = await fetch(`${clerkFrontendApi}/oauth/token`, {
             method: "POST",
@@ -156,8 +156,8 @@ export const performLogin = async () => {
     }
 
     const state = encodeState({ port, nonce });
-    const redirectUri = `${apiUrl}/auth/callback`;
-    const authorizedUrl = new URL(`${clerkFrontendApi}/oauth/authroize`);
+    const redirectUri = `${apiUrl.replace(/\/$/, "")}/auth/callback`;
+    const authorizedUrl = new URL(`${clerkFrontendApi}/oauth/authorize`);
 
     authorizedUrl.searchParams.set("response_type", "code");
     authorizedUrl.searchParams.set("client_id", clientId);
@@ -166,7 +166,7 @@ export const performLogin = async () => {
     authorizedUrl.searchParams.set("state", state);
     authorizedUrl.searchParams.set("prompt", "login");
     authorizedUrl.searchParams.set("code_challenge", codeChallenge);
-    authorizedUrl.searchParams.set("code_challenge_method", codeChallenge);
+    authorizedUrl.searchParams.set("code_challenge_method", "S256");
 
     void open(authorizedUrl.toString());
 
