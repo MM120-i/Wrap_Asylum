@@ -4,6 +4,8 @@ import sessions from "./routes/sessions";
 import { sentry } from "@sentry/hono/bun";
 import * as Sentry from "@sentry/hono/bun";
 import chat from "./routes/chat";
+import auth from "./routes/auth";
+import { requireAuth } from "./middleware/require-auth";
 
 const app = new Hono();
 
@@ -101,7 +103,14 @@ app.onError((error, c) => {
   );
 });
 
-const routes = app.route("/sessions", sessions).route("/chat", chat);
+app.use("/sessions/*", requireAuth);
+app.use("/chat/*", requireAuth);
+
+const routes = app
+  .route("/auth", auth)
+  .route("/sessions", sessions)
+  .route("/chat", chat);
+
 app.notFound((c) => c.json({ error: "Not found" }, 404));
 
 export type AppType = typeof routes;
