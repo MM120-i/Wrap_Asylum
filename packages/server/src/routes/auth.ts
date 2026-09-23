@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { unknown } from "zod";
 
 const app = new Hono().get("/callback", (c) => {
   const code = c.req.query("code");
@@ -21,10 +22,20 @@ const app = new Hono().get("/callback", (c) => {
       throw new Error("Invalid state");
     }
 
-    const payload = JSON.parse(Buffer.from(encoded, "base64url").toString());
+    const payload = JSON.parse(
+      Buffer.from(encoded, "base64url").toString(),
+    ) as {
+      port?: unknown;
+    };
+
     const port = payload.port;
 
-    if (!port || typeof port !== "number") {
+    if (
+      typeof port !== "number" ||
+      !Number.isInteger(port) ||
+      port < 1 ||
+      port > 65535
+    ) {
       throw new Error("Invalid port in state");
     }
 

@@ -17,6 +17,7 @@ import {
 } from "@warp-asylum/shared";
 
 import type { Prisma } from "@warp-asylum/database";
+import type { AuthenticatedEnv } from "../middleware/require-auth";
 
 const LLM_STEPS = 50;
 
@@ -293,13 +294,15 @@ const streamAIResponse = async (
   }
 };
 
-const app = new Hono()
+const app = new Hono<AuthenticatedEnv>()
   .post("/:sessionId/resume", async (c) => {
     const sessionId = c.req.param("sessionId");
+    const userId = c.get("userId");
 
     const session = await db.session.findUnique({
       where: {
         id: sessionId,
+        userId,
       },
       include: {
         messages: {
@@ -389,9 +392,12 @@ const app = new Hono()
   // ================================= sessionId =================================
   .post("/:sessionId", submitValidator, async (c) => {
     const sessionId = c.req.param("sessionId");
+    const userId = c.get("userId");
+
     const session = await db.session.findUnique({
       where: {
         id: sessionId,
+        userId,
       },
       include: {
         messages: {
