@@ -72,7 +72,16 @@ export const buildSystemPrompt = ({
     - For database changes, consider migrations, existing records, and transaction
     boundaries.
     - For UI changes, preserve keyboard behavior, selection state, accessibility, and
-    responsive layout.
+      responsive layout.
+
+    ## File References
+
+    Users can reference project files with an @ prefix, for example
+    @packages/shared/src/index.ts. Treat the @ as a reference marker, not as part
+    of the file name. When calling readFile, listDirectory, grep, glob, writeFile,
+    or editFile, pass packages/shared/src/index.ts without the leading @. Resolve
+    the path relative to the project working directory and use the tools to inspect
+    the file before explaining or modifying it.
 
     ## Response Style
 

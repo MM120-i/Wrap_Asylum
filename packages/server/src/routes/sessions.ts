@@ -1,11 +1,11 @@
 import { Hono } from "hono";
-// import { HTTPException } from "hono/http-exception";
 import { db } from "@warp-asylum/database";
 import { Role, Mode, MessageStatus } from "@warp-asylum/database/enums";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { findSupportedChatModel } from "@warp-asylum/shared";
 import * as Sentry from "@sentry/hono/bun";
+import type { AuthenticatedEnv } from "../middleware/require-auth";
 
 const createSessionsSchema = z.object({
   title: z.string(),
@@ -42,9 +42,12 @@ const createSessionValidator = zValidator(
   },
 );
 
-const app = new Hono()
+const app = new Hono<AuthenticatedEnv>()
   .get("/", async (c) => {
+    const userId = c.get("userId");
+
     const sessions = await db.session.findMany({
+      where: { userId },
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
@@ -60,17 +63,11 @@ const app = new Hono()
     return c.json(sessions);
   })
   .get("/:id", async (c) => {
-    // await new Promise((r) => setTimeout(r, 5000)); // Simulates slow session loading
-
-    // throw new HTTPException(500, {
-    //   // Simulates session loading error
-    //   message: "Mock error: Session loading failed",
-    // });
-
     const id = c.req.param("id");
+    const userId = c.get("userId");
 
     const session = await db.session.findUnique({
-      where: { id },
+      where: { id, userId },
       include: {
         messages: {
           orderBy: {
@@ -101,19 +98,13 @@ const app = new Hono()
     return c.json(session);
   })
   .post("/", createSessionValidator, async (c) => {
-    // await new Promise((r) => setTimeout(r, 5000)); // Simulates slow session loading
-
-    // throw new HTTPException(500, {
-    //   // Simulates session loading error
-    //   message: "Mock error: Session loading failed",
-    // });
-
+    const userId = c.get("userId");
     const { initialMessage, ...data } = c.req.valid("json");
 
     const session = await db.session.create({
       data: {
         ...data,
-        userId: "mock-user",
+        userId,
         ...(initialMessage && {
           messages: {
             create: {

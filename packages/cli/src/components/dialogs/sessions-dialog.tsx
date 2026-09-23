@@ -29,7 +29,7 @@ export const SessionDialogContent = () => {
       try {
         const res = await apiClient.sessions.$get();
 
-        if (!res) {
+        if (!res.ok) {
           throw new Error(await getErrorMessage(res));
         }
 
