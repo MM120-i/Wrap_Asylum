@@ -6,7 +6,7 @@ services:
     plan: free
     buildCommand: bun install && cd packages/database && bunx prisma generate
     startCommand: bun run packages/server/src/index.ts
-    healthCheckPath: /sessions
+    healthCheckPath: /health
     autoDeploy: true
     envVars:
       - key: PORT
@@ -16,6 +16,12 @@ services:
       - key: OPENAI_API_KEY
         sync: false
       - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: CLERK_SECRET_KEY
+        sync: false
+      - key: CLERK_PUBLISHABLE_KEY
+        sync: false
+      - key: CLERK_OAUTH_CLIENT_ID
         sync: false
       - key: LOCAL_MODEL_BASE_URL
         sync: false
