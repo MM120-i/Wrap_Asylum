@@ -59,6 +59,7 @@ export const performLogin = async () => {
 
   return new Promise<{ token: string }>((resolve, reject) => {
     const server = Bun.serve({
+      hostname: "127.0.0.1",
       port: 0,
       async fetch(request) {
         const url = new URL(request.url);
@@ -127,7 +128,17 @@ export const performLogin = async () => {
             throw new Error(details || "Failed to exchange authorization code");
           }
 
-          const tokenData = (await tokenRes.json()) as { access_token: string };
+          const tokenData = (await tokenRes.json()) as {
+            access_token: unknown;
+          };
+
+          if (
+            typeof tokenData.access_token !== "string" ||
+            tokenData.access_token.length === 0
+          ) {
+            throw new Error("Invalid authentication response");
+          }
+
           settled = true;
           saveAuth({ token: tokenData.access_token });
           resolve({ token: tokenData.access_token });
@@ -168,7 +179,11 @@ export const performLogin = async () => {
     authorizedUrl.searchParams.set("code_challenge", codeChallenge);
     authorizedUrl.searchParams.set("code_challenge_method", "S256");
 
-    void open(authorizedUrl.toString());
+    void open(authorizedUrl.toString()).catch(() => {
+      console.log(
+        `Failed to open browser automatically. Open this URL to sign in:\n${authorizedUrl.toString()}`,
+      );
+    });
 
     setTimeout(() => {
       if (!settled) {

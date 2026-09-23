@@ -12,7 +12,14 @@ export const requireAuth = createMiddleware<AuthenticatedEnv>(
     try {
       const auth = await authenticateOAuthRequest(ctx.req.raw);
 
-      if (!auth) {
+      if (!("userid" in auth)) {
+        if (auth.reason === "unexpected-error") {
+          return ctx.json(
+            { error: "Authentication service unavailable. Try again later." },
+            503,
+          );
+        }
+
         return ctx.json(
           { error: "Unauthorized. Run /login to continue." },
           401,

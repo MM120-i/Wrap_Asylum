@@ -13,19 +13,35 @@ const clerkClient = createClerkClient({
   publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
 });
 
-export const authenticateOAuthRequest = async (request: Request) => {
+export type OAuthAuthSuccess = {
+  userid: string;
+};
+
+export type OAuthAuthFailure = {
+  reason: string | null;
+};
+
+export const authenticateOAuthRequest = async (
+  request: Request,
+): Promise<OAuthAuthSuccess | OAuthAuthFailure> => {
   const requestState = await clerkClient.authenticateRequest(request, {
     acceptsToken: "oauth_token",
   });
 
   if (!requestState.isAuthenticated) {
-    return null;
+    return { reason: requestState.reason ?? null };
   }
 
   const auth = requestState.toAuth();
 
   if (auth.tokenType !== "oauth_token" || !auth.userId) {
-    return null;
+    return { reason: "token-type-mismatch" };
+  }
+
+  const expectedClientId = process.env.CLERK_OAUTH_CLIENT_ID;
+
+  if (expectedClientId && auth.clientId !== expectedClientId) {
+    return { reason: "token-type-mismatch" };
   }
 
   return { userid: auth.userId };

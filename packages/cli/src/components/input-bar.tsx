@@ -184,7 +184,6 @@ const getMentionCandidates = async (
     if (
       directMatches.length > 0 ||
       directoryPart !== "" ||
-      namePrefix !== "" ||
       namePrefix.length < 2
     ) {
       return directMatches;
@@ -196,7 +195,13 @@ const getMentionCandidates = async (
       absoluteDirectory: string,
       directoryPart: string,
     ): Promise<void> => {
-      const entries = await readdir(absoluteDirectory, { withFileTypes: true });
+      let entries;
+
+      try {
+        entries = await readdir(absoluteDirectory, { withFileTypes: true });
+      } catch {
+        return;
+      }
 
       for (const entry of entries) {
         if (!showHiddenEntries && entry.name.startsWith(".")) {
@@ -420,7 +425,7 @@ export const InputBar = ({ onSubmit, disabled = false }: Props) => {
       }
 
       const insertion =
-        candidate.kind === "directory" ? candidate.path : `${candidate.path}`;
+        candidate.kind === "directory" ? candidate.path : `${candidate.path} `;
 
       const nextText = `${textarea.plainText.slice(0, mention.start)}@${insertion}${textarea.plainText.slice(mention.end)}`;
       const nextCursorOffset = mention.start + insertion.length + 1;
@@ -728,6 +733,7 @@ export const InputBar = ({ onSubmit, disabled = false }: Props) => {
             width={45}
             keyBindings={TEXTAREA_KEY_BINDINGS}
             onContentChange={handleTextareaContentChange}
+            onCursorChange={handleTextareaCursorChange}
             placeholder={`Ask anything... "Fix a bug in the database"`}
           />
           <StatusBar />

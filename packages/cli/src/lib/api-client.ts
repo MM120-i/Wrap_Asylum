@@ -12,15 +12,18 @@ export const apiClient = hc<AppType>(
     ) => {
       const headers = new Headers(init?.headers);
       const auth = getAuth();
+      const requestToken = auth?.token;
 
-      if (auth) {
-        headers.set("Authorization", `Bearer ${auth.token}`);
+      if (requestToken) {
+        headers.set("Authorization", `Bearer ${requestToken}`);
       }
 
       const response = await fetch(input, { ...init, headers });
 
-      if (response.status === 401) {
-        clearAuth();
+      if (response.status === 401 && requestToken) {
+        if (getAuth()?.token === requestToken) {
+          clearAuth();
+        }
       }
 
       return response;
