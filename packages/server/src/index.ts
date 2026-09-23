@@ -9,6 +9,10 @@ import { requireAuth } from "./middleware/require-auth";
 
 const app = new Hono();
 
+app.get("/health", (c) => {
+  return c.json({ status: "ok" }, 200);
+});
+
 app.get("/auth/callback", (c) => {
   const state = c.req.query("state");
 

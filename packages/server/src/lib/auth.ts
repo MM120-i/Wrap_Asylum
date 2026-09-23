@@ -1,17 +1,21 @@
 import { createClerkClient } from "@clerk/backend";
 
-if (!process.env.CLERK_SECRET_KEY) {
-  throw new Error("CLERK_SECRET_KEY env variable is required");
-}
+let clerkClient: ReturnType<typeof createClerkClient> | null = null;
 
-if (!process.env.CLERK_PUBLISHABLE_KEY) {
-  throw new Error("CLERK_PUBLISHABLE_KEY env variable is required");
-}
+const getClerkClient = () => {
+  const secretKey = process.env.CLERK_SECRET_KEY;
+  const publishableKey = process.env.CLERK_PUBLISHABLE_KEY;
 
-const clerkClient = createClerkClient({
-  secretKey: process.env.CLERK_SECRET_KEY,
-  publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
-});
+  if (!secretKey || !publishableKey) {
+    return null;
+  }
+
+  if (!clerkClient) {
+    clerkClient = createClerkClient({ secretKey, publishableKey });
+  }
+
+  return clerkClient;
+};
 
 export type OAuthAuthSuccess = {
   userid: string;
@@ -24,7 +28,13 @@ export type OAuthAuthFailure = {
 export const authenticateOAuthRequest = async (
   request: Request,
 ): Promise<OAuthAuthSuccess | OAuthAuthFailure> => {
-  const requestState = await clerkClient.authenticateRequest(request, {
+  const client = getClerkClient();
+
+  if (!client) {
+    return { reason: "unexpected-error" };
+  }
+
+  const requestState = await client.authenticateRequest(request, {
     acceptsToken: "oauth_token",
   });
 
