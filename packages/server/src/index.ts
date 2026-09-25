@@ -6,6 +6,7 @@ import * as Sentry from "@sentry/hono/bun";
 import chat from "./routes/chat";
 import auth from "./routes/auth";
 import { requireAuth } from "./middleware/require-auth";
+import billing from "./routes/billing";
 
 const app = new Hono();
 
@@ -63,15 +64,6 @@ app.get("/debug-sentry", () => {
   throw new Error("My first Sentry error!");
 });
 
-// app.get("/", (c) => {
-//   const result = sessionList.map(({ id, title, createdAt }) => ({
-//     id,
-//     title,
-//     createdAt,
-//   }));
-//   return c.json(result);
-// });
-
 app.onError((error, c) => {
   if (error instanceof HTTPException) {
     Sentry.logger.warn("Handled HTTP error", {
@@ -105,11 +97,14 @@ app.onError((error, c) => {
 
 app.use("/sessions/*", requireAuth);
 app.use("/chat/*", requireAuth);
+app.use("/billing/checkout", requireAuth);
+app.use("/billing/portal", requireAuth);
 
 const routes = app
   .route("/auth", auth)
   .route("/sessions", sessions)
-  .route("/chat", chat);
+  .route("/chat", chat)
+  .route("/billing", billing);
 
 app.notFound((c) => c.json({ error: "Not found" }, 404));
 
