@@ -7,22 +7,44 @@ const app = new Hono<AuthenticatedEnv>()
   .post("/checkout", async (c) => {
     const userId = c.get("userId");
 
-    return c.json({
-      url: await createCheckoutUrl({
+    try {
+      const checkout = await createCheckoutUrl({
         customerExternalId: userId,
         requestUrl: c.req.url,
-      }),
-    });
+      });
+
+      return c.json({ url: checkout.url });
+    } catch (error) {
+      return c.json(
+        {
+          error:
+            error instanceof Error ? error.message : "Unable to open checkout",
+        },
+        503,
+      );
+    }
   })
   .post("/portal", async (c) => {
     const userId = c.get("userId");
 
-    return c.json({
-      url: await createCustomerPolarUrl({
-        customerExternalId: userId,
-        requestUrl: c.req.url,
-      }),
-    });
+    try {
+      return c.json({
+        url: await createCustomerPolarUrl({
+          customerExternalId: userId,
+          requestUrl: c.req.url,
+        }),
+      });
+    } catch (error) {
+      return c.json(
+        {
+          error:
+            error instanceof Error
+              ? error.message
+              : "Unable to open billing portal",
+        },
+        503,
+      );
+    }
   })
   .get("/success", (c) =>
     c.text("Done. You can close this tab and return to warpasylum"),

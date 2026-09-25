@@ -3,8 +3,10 @@ import { db } from "@warp-asylum/database";
 import { Role, Mode, MessageStatus } from "@warp-asylum/database/enums";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
-import { findSupportedChatModel } from "@warp-asylum/shared";
 import * as Sentry from "@sentry/hono/bun";
+import { requireCreditsBalance } from "../middleware/require-credits-balance";
+import { isSupportedChatModel } from "../lib/models";
+
 import type { AuthenticatedEnv } from "../middleware/require-auth";
 
 const createSessionsSchema = z.object({
@@ -15,9 +17,7 @@ const createSessionsSchema = z.object({
       role: z.enum(Role),
       content: z.string(),
       mode: z.enum(Mode),
-      model: z
-        .string()
-        .refine((id) => !!findSupportedChatModel(id), "Unsupported model"),
+      model: z.string().refine(isSupportedChatModel, "Unsupported model"),
     })
     .optional(),
 });
@@ -97,7 +97,7 @@ const app = new Hono<AuthenticatedEnv>()
 
     return c.json(session);
   })
-  .post("/", createSessionValidator, async (c) => {
+  .post("/", requireCreditsBalance, createSessionValidator, async (c) => {
     const userId = c.get("userId");
     const { initialMessage, ...data } = c.req.valid("json");
 

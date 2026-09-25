@@ -38,10 +38,34 @@ export const getPolarServer = (): PolarServer => {
   return server;
 };
 
-const polar = new Polar({
-  accessToken: getPolarAccessToken(),
-  server: getPolarServer(),
-});
+let polarClient: Polar | null = null;
+
+const getPolarClient = (): Polar | null => {
+  const accessToken = process.env.POLAR_ACCESS_TOKEN;
+
+  if (!accessToken) {
+    return null;
+  }
+
+  if (!polarClient) {
+    polarClient = new Polar({
+      accessToken,
+      server: getPolarServer(),
+    });
+  }
+
+  return polarClient;
+};
+
+const requirePolarClient = (): Polar => {
+  const client = getPolarClient();
+
+  if (!client) {
+    throw new Error("Billing is not configured (missing POLAR_ACCESS_TOKEN)");
+  }
+
+  return client;
+};
 
 const hasStatusCode = (error: unknown): error is { statusCode: number } => {
   return (
@@ -61,7 +85,7 @@ export const createCheckoutUrl = async ({
   customerExternalId,
   requestUrl,
 }: CreateCheckoutUrlParams) => {
-  const result = await polar.checkouts.create({
+  const result = await requirePolarClient().checkouts.create({
     products: [getPolarProductId()],
     successUrl: new URL("/billing/success", requestUrl).toString(),
     externalCustomerId: customerExternalId,
@@ -75,7 +99,7 @@ export const createCustomerPolarUrl = async ({
   customerExternalId,
   requestUrl,
 }: CreateCheckoutUrlParams) => {
-  const result = await polar.customerSessions.create({
+  const result = await requirePolarClient().customerSessions.create({
     externalCustomerId: customerExternalId,
     returnUrl: new URL("/billing/success", requestUrl).toString(),
   });
@@ -85,7 +109,8 @@ export const createCustomerPolarUrl = async ({
 
 export const getAvaliableCreditBalance = async (customerExternalId: string) => {
   try {
-    const customerState = await polar.customers.getStateExternal({
+    const customerState =
+      await requirePolarClient().customers.getStateExternal({
       externalId: customerExternalId,
     });
 
@@ -124,7 +149,13 @@ export const ingestAiUsage = async ({
     return;
   }
 
-  await polar.events.ingest({
+  const client = getPolarClient();
+
+  if (!client) {
+    return;
+  }
+
+  await client.events.ingest({
     events: [
       {
         name: "warpasylum_usage",
