@@ -16,6 +16,7 @@
     "@ai-sdk/provider-utils": "^5.0.18",
     "@clerk/backend": "^3.18.1",
     "@hono/zod-validator": "^0.9.0",
+    "@polar-sh/sdk": "^0.49.0",
     "@sentry/bun": "^10.69.0",
     "@sentry/hono": "^10.69.0",
     "@warp-asylum/database": "workspace:*",
