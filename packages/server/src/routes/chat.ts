@@ -195,6 +195,36 @@ const streamAIResponse = async (
       onFinish(event) {
         completedUsage = event.usage;
       },
+      onAbort({ steps }) {
+        if (steps.length === 0) {
+          return;
+        }
+
+        const inputTokens = steps.reduce(
+          (total, step) => total + (step.usage.inputTokens ?? 0),
+          0,
+        );
+
+        const outputTokens = steps.reduce(
+          (total, step) => total + (step.usage.outputTokens ?? 0),
+          0,
+        );
+
+        completedUsage = {
+          inputTokens,
+          outputTokens,
+          totalTokens: inputTokens + outputTokens,
+          inputTokenDetails: {
+            noCacheTokens: undefined,
+            cacheReadTokens: undefined,
+            cacheWriteTokens: undefined,
+          },
+          outputTokenDetails: {
+            textTokens: undefined,
+            reasoningTokens: undefined,
+          },
+        };
+      },
     });
 
     for await (const part of result.stream) {
@@ -359,7 +389,7 @@ const streamAIResponse = async (
 };
 
 const app = new Hono<AuthenticatedEnv>()
-  .post("/:sessionId/resume", async (c) => {
+  .post("/:sessionId/resume", requireCreditsBalance, async (c) => {
     const sessionId = c.req.param("sessionId");
     const userId = c.get("userId");
 
