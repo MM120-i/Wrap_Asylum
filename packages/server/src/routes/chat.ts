@@ -6,7 +6,7 @@ import { streamText as aiStreamText, stepCountIs } from "ai";
 import { db } from "@warp-asylum/database";
 import { Mode, MessageStatus } from "@warp-asylum/database/enums";
 import { isSupportedChatModel, resolvedChatModel } from "../lib/models";
-import { buildSystemPrompt } from "../system.prompt";
+import { buildSystemPrompt } from "../system-prompt";
 import { createTools } from "../tools";
 import { requireCreditsBalance } from "../middleware/require-credits-balance";
 import { calculateCreditsForUsage } from "../lib/credits";
@@ -186,7 +186,7 @@ const streamAIResponse = async (
   try {
     const result = aiStreamText({
       model: resolveModel.model,
-      system: buildSystemPrompt({ cwd, mode }),
+      system: buildSystemPrompt({ mode }),
       messages: history,
       tools,
       stopWhen: tools ? stepCountIs(LLM_STEPS) : undefined,
@@ -483,8 +483,6 @@ const app = new Hono<AuthenticatedEnv>()
       throw error;
     }
   })
-
-  // ================================= sessionId =================================
   .post("/:sessionId", requireCreditsBalance, submitValidator, async (c) => {
     const sessionId = c.req.param("sessionId");
     const userId = c.get("userId");
