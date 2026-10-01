@@ -3,15 +3,8 @@ export type ModelPricing = {
   outputUsdPerMillionTokens: number;
 };
 
-// TODO: Add more supported providers later
 export type SupportedProvider = "anthropic" | "openai" | "local";
 
-/**
- * Local models are served from any OpenAI-compatible endpoint
- * (Ollama, LM Studio, vLLM, llama.cpp, ...). The id format is
- * `local:<model-name>` where `<model-name>` is the model id the
- * local server knows the model by, e.g. `local:qwen3:8b`.
- */
 export type LocalChatModelId = `local:${string}`;
 
 export type AnthropicChatModelId =
