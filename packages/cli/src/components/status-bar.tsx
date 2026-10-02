@@ -1,7 +1,7 @@
 import { TextAttributes } from "@opentui/core";
 import { useTheme } from "../providers/theme";
 import { usePromptConfig } from "../providers/prompt-config";
-import { Mode } from "@warp-asylum/database/enums";
+import { Mode } from "@warp-asylum/shared";
 
 export const StatusBar = () => {
   const { colors } = useTheme();

@@ -1,9 +1,9 @@
 import "opentui-spinner/react";
 import { useTheme } from "../providers/theme";
-import { Mode } from "@warp-asylum/database/enums";
+import { Mode, type ModeType } from "@warp-asylum/shared";
 
 type Props = {
-  mode?: Mode;
+  mode?: ModeType;
 };
 
 export const Spinner = ({ mode = Mode.BUILD }: Props) => {

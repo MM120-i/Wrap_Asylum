@@ -15,7 +15,6 @@ import { executeLocalTool } from "../lib/local-tools";
 
 import {
   type ModeType,
-  type SupportedChatModel,
   type SupportedChatModelId,
   type ToolContracts,
 } from "@warp-asylum/shared";
