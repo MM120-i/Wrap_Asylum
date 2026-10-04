@@ -127,7 +127,7 @@ export const executeLocalTool = async (
         args.push(`--include=${include}`);
       }
 
-      args.push(pattern, resolved);
+      args.push("-e", pattern, "--", resolved);
 
       const proc = Bun.spawn(["grep", ...args], {
         cwd,
@@ -156,7 +156,7 @@ export const executeLocalTool = async (
 
       for (const line of lines) {
         if (matches.length >= MAX_MATCHES) {
-          truncated = false;
+          truncated = true;
           break;
         }
 
@@ -219,24 +219,46 @@ export const executeLocalTool = async (
         cwd: resolveInsideCwd(".").resolved,
         stdout: "pipe",
         stderr: "pipe",
+        detached: true,
         env: { ...process.env, TERM: "dumb" },
       });
 
-      const timer = setTimeout(() => proc.kill(), timeout);
+      let timedOut = false;
+      const timer = setTimeout(() => {
+        timedOut = true;
 
-      const [stdout, stderr] = await Promise.all([
-        new Response(proc.stdout).text(),
-        new Response(proc.stderr).text(),
-      ]);
+        try {
+          if (process.platform !== "win32") {
+            process.kill(-proc.pid, "SIGKILL");
+          } else {
+            proc.kill("SIGKILL");
+          }
+        } catch {
+          try {
+            proc.kill("SIGKILL");
+          } catch {
+            // Process already exited.
+          }
+        }
+      }, timeout);
 
-      const exitCode = await proc.exited;
-      clearTimeout(timer);
+      try {
+        const [stdout, stderr] = await Promise.all([
+          new Response(proc.stdout).text(),
+          new Response(proc.stderr).text(),
+        ]);
 
-      return {
-        stdout: truncate(stdout, MAX_OUTPUT),
-        stderr: truncate(stderr, MAX_OUTPUT),
-        exitCode,
-      };
+        const exitCode = await proc.exited;
+
+        return {
+          stdout: truncate(stdout, MAX_OUTPUT),
+          stderr: truncate(stderr, MAX_OUTPUT),
+          exitCode,
+          timedOut,
+        };
+      } finally {
+        clearTimeout(timer);
+      }
     }
 
     default:

@@ -43,7 +43,7 @@ export const toolInputSchemas = {
       .string()
       .optional()
       .describe("Short description of the command"),
-    timeout: z.number().optional().describe("Timeout in miliseconds"),
+    timeout: z.number().optional().describe("Timeout in milliseconds"),
   }),
 } as const;
 
@@ -59,7 +59,7 @@ export const readOnlyToolContracts = {
   }),
   glob: tool({
     description:
-      "Find files matching a job pattern under the current project directory",
+      "Find files matching a glob pattern under the current project directory",
     inputSchema: toolInputSchemas.glob,
   }),
   grep: tool({

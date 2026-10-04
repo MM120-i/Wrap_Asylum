@@ -78,7 +78,9 @@ export const useChat = (sessionId: string, initialMessage: Message[]) => {
     messages: initialMessage,
     transport,
     onToolCall({ toolCall }) {
-      const mode = chat.messages.at(-1)?.metadata?.mode ?? "BUILD";
+      const mode =
+        [...chat.messages].findLast((m) => m.metadata?.mode)?.metadata?.mode ??
+        "PLAN";
 
       void executeLocalTool(toolCall.toolName, toolCall.input, mode)
         .then((output) =>

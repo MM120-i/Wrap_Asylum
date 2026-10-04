@@ -8,6 +8,7 @@ import { ingestAiUsage } from "../lib/polar";
 import { isSupportedChatModel, resolvedChatModel } from "../lib/models";
 
 import {
+  buildToolContracts,
   getToolContracts,
   modeSchema,
   type ModeType,
@@ -70,7 +71,7 @@ const hasPendingToolCalls = (message: WarpasylumUIMessage) => {
   return message.parts.some((part) => {
     if (part.type === "dynamic-tool" || part.type.startsWith("tool-")) {
       const state = (part as { state?: string }).state;
-      return state !== "output-avaliable" && state !== "output-error";
+      return state !== "output-available" && state !== "output-error";
     }
 
     return false;
@@ -91,6 +92,7 @@ const app = new Hono<AuthenticatedEnv>().post(
     }
 
     const startTime = Date.now();
+    const requestId = crypto.randomUUID();
     const tools = getToolContracts(mode);
     const resolvedModel = resolvedChatModel(model);
 
@@ -119,10 +121,12 @@ const app = new Hono<AuthenticatedEnv>().post(
 
     const nextMessages = await validateUIMessages<WarpasylumUIMessage>({
       messages: mergedMessages,
-      tools,
+      tools: buildToolContracts,
     });
 
-    const modelMessages = await convertToModelMessages(nextMessages, { tools });
+    const modelMessages = await convertToModelMessages(nextMessages, {
+      tools: buildToolContracts,
+    });
     let completedUsage: LanguageModelUsage | null = null;
 
     const result = streamText({
@@ -161,16 +165,14 @@ const app = new Hono<AuthenticatedEnv>().post(
             return;
           }
 
-          if (hasPendingToolCalls(event.responseMessage)) {
-            return;
+          if (!hasPendingToolCalls(event.responseMessage)) {
+            await db.session.update({
+              where: { id, userId },
+              data: {
+                messages: event.messages as unknown as Prisma.InputJsonValue,
+              },
+            });
           }
-
-          await db.session.update({
-            where: { id, userId },
-            data: {
-              messages: event.messages as unknown as Prisma.InputJsonValue,
-            },
-          });
 
           if (!completedUsage) {
             return;
@@ -193,7 +195,7 @@ const app = new Hono<AuthenticatedEnv>().post(
 
             await ingestAiUsage({
               externalCustomerId: userId,
-              eventId: `chat-message:${event.responseMessage.id}`,
+              eventId: `chat-message:${requestId}`,
               credits: billableUsage.credits,
             });
           } catch (error) {

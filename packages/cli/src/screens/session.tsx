@@ -46,7 +46,7 @@ const ChatMessage = ({ msg }: { msg: Message }) => {
   return (
     <BotMessage
       parts={msg.parts}
-      model={msg.metadata?.mode ?? "unknown"}
+      model={msg.metadata?.model ?? "unknown"}
       mode={msg.metadata?.mode ?? "BUILD"}
       durationMs={msg.metadata?.durationMs?.toString()}
       streaming={false}
@@ -84,7 +84,11 @@ const SessionChat = ({
   }, [abort]);
 
   useKeyboard((key) => {
-    if (key.name === "escape" && isTopLayer("base") && status === "streaming") {
+    if (
+      key.name === "escape" &&
+      isTopLayer("base") &&
+      (status === "streaming" || status === "submitted")
+    ) {
       key.preventDefault();
       interrupt();
     }

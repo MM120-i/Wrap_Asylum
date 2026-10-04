@@ -15,6 +15,7 @@ export {
   Mode,
   modeSchema,
   toolInputSchemas,
+  buildToolContracts,
   getToolContracts,
   type ToolContracts,
   type ModeType,
