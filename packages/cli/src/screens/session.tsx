@@ -11,11 +11,7 @@ import { useKeyboard } from "@opentui/react";
 import { useKeyboardLayer } from "../providers/keyboard-layer";
 import { usePromptConfig } from "../providers/prompt-config";
 
-import {
-  type ModeType,
-  type SupportedChatModel,
-  type SupportedChatModelId,
-} from "@warp-asylum/shared";
+import { type ModeType, type SupportedChatModelId } from "@warp-asylum/shared";
 import type { InferResponseType } from "hono/client";
 import type { Message } from "../hooks/use-chat";
 

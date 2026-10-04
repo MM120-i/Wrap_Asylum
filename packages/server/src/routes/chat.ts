@@ -16,7 +16,9 @@ import {
 
 import {
   convertToModelMessages,
+  createUIMessageStreamResponse,
   streamText,
+  toUIMessageStream,
   validateUIMessages,
   type InferUITools,
   type LanguageModelUsage,
@@ -134,68 +136,79 @@ const app = new Hono<AuthenticatedEnv>().post(
       },
     });
 
-    return result.toUIMessageStreamResponse<WarpasylumUIMessage>({
-      originalMessages: nextMessages,
-      messageMetadata({ part }) {
-        if (part.type === "start") {
-          return { mode, model };
-        }
+    return createUIMessageStreamResponse({
+      stream: toUIMessageStream<typeof tools, WarpasylumUIMessage>({
+        stream: result.stream,
+        originalMessages: nextMessages,
+        messageMetadata({ part }) {
+          if (part.type === "start") {
+            return { mode, model };
+          }
 
-        if (part.type !== "finish") {
-          return undefined;
-        }
+          if (part.type !== "finish") {
+            return undefined;
+          }
 
-        return {
-          mode,
-          model,
-          durationMs: Date.now() - startTime,
-          ...(completedUsage ? { usage: completedUsage } : {}),
-        };
-      },
-      async onFinish(event) {
-        if (event.isAborted) {
-          return;
-        }
+          return {
+            mode,
+            model,
+            durationMs: Date.now() - startTime,
+            ...(completedUsage ? { usage: completedUsage } : {}),
+          };
+        },
+        async onEnd(event) {
+          if (event.isAborted) {
+            return;
+          }
 
-        if (hasPendingToolCalls(event.responseMessage)) {
-          return;
-        }
+          if (hasPendingToolCalls(event.responseMessage)) {
+            return;
+          }
 
-        await db.session.update({
-          where: { id, userId },
-          data: {
-            messages: event.messages as unknown as Prisma.InputJsonValue,
-          },
-        });
-
-        if (!completedUsage) {
-          return;
-        }
-
-        try {
-          const billableUsage = calculateCreditsForUsage({
-            provider: resolvedModel.provider,
-            model: resolvedModel.modelId,
-            usage: completedUsage,
+          await db.session.update({
+            where: { id, userId },
+            data: {
+              messages: event.messages as unknown as Prisma.InputJsonValue,
+            },
           });
 
-          await ingestAiUsage({
-            externalCustomerId: userId,
-            eventId: `chat-message:${event.responseMessage.id}`,
-            credits: billableUsage.credits,
-          });
-        } catch (error) {
-          console.error("Failed to ingest Polar AI usage for chat message", {
-            error,
-            sessionId: id,
-            messageId: event.responseMessage.id,
-            userId,
-          });
-        }
-      },
-      onError(error) {
-        return error instanceof Error ? error.message : String(error);
-      },
+          if (!completedUsage) {
+            return;
+          }
+
+          if (resolvedModel.provider === "local") {
+            return;
+          }
+
+          try {
+            const billableUsage = calculateCreditsForUsage({
+              provider: resolvedModel.provider,
+              model: resolvedModel.modelId,
+              usage: completedUsage,
+            });
+
+            if (billableUsage.credits <= 0) {
+              return;
+            }
+
+            await ingestAiUsage({
+              externalCustomerId: userId,
+              eventId: `chat-message:${event.responseMessage.id}`,
+              credits: billableUsage.credits,
+            });
+          } catch (error) {
+            console.error("Failed to ingest Polar AI usage for chat message", {
+              error,
+              sessionId: id,
+              messageId: event.responseMessage.id,
+              userId,
+            });
+          }
+        },
+        onError(error) {
+          return error instanceof Error ? error.message : String(error);
+        },
+      }),
     });
   },
 );

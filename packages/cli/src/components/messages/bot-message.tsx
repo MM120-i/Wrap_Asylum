@@ -75,13 +75,7 @@ const groupConsecutiveParts = (parts: ClientMessagePart[]): PartGroup[] => {
   return groups;
 };
 
-export const BotMessage = ({
-  parts,
-  model,
-  mode,
-  durationMs,
-  streaming = false,
-}: Props) => {
+export const BotMessage = ({ parts, model, mode, durationMs }: Props) => {
   const { colors } = useTheme();
 
   return (
