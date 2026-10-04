@@ -1,5 +1,3 @@
-import { Mode } from "@warp-asylum/database/enums";
-
 import {
   useContext,
   useState,
@@ -10,13 +8,15 @@ import {
 
 import {
   DEFAULT_CHAT_MODEL_ID,
+  Mode,
   type SupportedChatModelId,
+  type ModeType,
 } from "@warp-asylum/shared";
 
 type PromptConfigContextValue = {
-  mode: Mode;
+  mode: ModeType;
   toggleMode: () => void;
-  setMode: (mode: Mode) => void;
+  setMode: (mode: ModeType) => void;
   model: SupportedChatModelId;
   setModel: (model: SupportedChatModelId) => void;
 };
@@ -44,7 +44,8 @@ type PromptConfigProviderProps = {
 export const PromptConfigProvider = ({
   children,
 }: PromptConfigProviderProps) => {
-  const [mode, setMode] = useState<Mode>(Mode.BUILD);
+  const [mode, setMode] = useState<ModeType>(Mode.BUILD);
+
   const [model, setModel] = useState<SupportedChatModelId>(
     DEFAULT_CHAT_MODEL_ID,
   );

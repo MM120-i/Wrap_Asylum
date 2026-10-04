@@ -1,9 +1,9 @@
 import { useTheme } from "../../providers/theme";
-import { Mode } from "@warp-asylum/database/enums";
+import { Mode, type ModeType } from "@warp-asylum/shared";
 
 type Props = {
   message: string;
-  mode: Mode;
+  mode: ModeType;
 };
 
 export const UserMessage = ({ message, mode }: Props) => {

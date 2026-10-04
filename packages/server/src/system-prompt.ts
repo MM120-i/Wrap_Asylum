@@ -1,16 +1,10 @@
-import type { Mode } from "@warp-asylum/database/enums";
+import type { ModeType } from "@warp-asylum/shared";
 
 type SystemPromptParams = {
-  cwd: string | null;
-  mode: Mode;
+  mode: ModeType;
 };
 
-export const buildSystemPrompt = ({
-  cwd,
-  mode,
-}: SystemPromptParams): string => {
-  const workingDirectory = cwd ?? "not specified";
-
+export const buildSystemPrompt = ({ mode }: SystemPromptParams): string => {
   const modeInstructions =
     mode === "PLAN"
       ? `You are in PLAN mode.
@@ -40,7 +34,6 @@ export const buildSystemPrompt = ({
 
     ## Current Context
 
-    - Working directory: ${workingDirectory}
     - Operating mode: ${mode}
 
     ${modeInstructions}
